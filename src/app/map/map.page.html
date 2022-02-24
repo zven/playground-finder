@@ -1,0 +1,12 @@
+<ion-content [fullscreen]="true">
+  <div id="mapbox"></div>
+  <div id="loading" *ngIf="isLoading">
+    <ion-progress-bar type="indeterminate"></ion-progress-bar>
+    <h2>Loading playgrounds…</h2>
+  </div>
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openSearchModal()" size="small">
+      <ion-icon name="search"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

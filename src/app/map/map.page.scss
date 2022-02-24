@@ -1,0 +1,22 @@
+#mapbox {
+  width: 100%;
+  height: 100%;
+}
+
+#loading {
+  width: 100%;
+  height: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffffa0;
+  backdrop-filter: blur(3px);
+  ion-progress-bar {
+    margin-top: var(--ion-safe-area-top);
+  }
+  h2 {
+    text-align: center;
+    padding-bottom: 0.5em;
+  }
+}
