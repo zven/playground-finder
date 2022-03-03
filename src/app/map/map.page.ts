@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { ModalController } from '@ionic/angular'
-import { SearchComponent } from '../search/search.component'
+import { ToastButton, ToastController } from '@ionic/angular'
 import {
   Playground,
   PlaygroundResult,
@@ -8,7 +7,7 @@ import {
 } from '../service/playground-service/playground.service'
 
 import * as MapboxGl from 'mapbox-gl'
-import { BBox } from '@turf/helpers'
+import * as Turf from '@turf/turf'
 
 @Component({
   selector: 'app-map',
@@ -18,19 +17,28 @@ import { BBox } from '@turf/helpers'
 export class MapPage implements OnInit {
   private mapboxToken = 'API_KEY'
   private map: MapboxGl.Map
-  private currentModal: HTMLIonModalElement
 
   isLoading: boolean = false
-  isSearchActive: boolean = false
+  isSearchActive: boolean = true
   searchRange: number = 2000
 
   formattedSearchRange(): string {
     return `${(this.searchRange / 1000).toFixed(1)} km`
   }
 
+  currentLatLngString(): string {
+    if (this.currentPlaygroundResult) {
+      return `${this.currentPlaygroundResult.lat.toFixed(3)} /
+        ${this.currentPlaygroundResult.lon.toFixed(3)}`
+    }
+    return ''
+  }
+
+  currentPlaygroundResult: PlaygroundResult = undefined
+
   constructor(
     private playgroundService: PlaygroundService,
-    private modalController: ModalController
+    private toastController: ToastController
   ) {
     MapboxGl.accessToken = this.mapboxToken
   }
@@ -66,32 +74,45 @@ export class MapPage implements OnInit {
 
       const cachedResult = this.playgroundService.loadCachedPlaygroundResult()
       if (cachedResult) {
+        this.searchRange = cachedResult.searchRange
         this.addPlaygroundResultToMap(cachedResult)
       }
     })
 
     this.map.on('click', async (e) => {
-      if (this.isLoading) {
-        return
-      }
-      this.addPinToMap(e.lngLat.lng, e.lngLat.lat)
-      this.isLoading = true
-      this.playgroundService.loadPlaygroundWithLatLng(
-        e.lngLat.lng,
-        e.lngLat.lat,
-        this.searchRange,
-        async (success, result) => {
-          this.isLoading = false
-          if (success && result) {
-            this.addPlaygroundResultToMap(result)
-          }
-        }
-      )
+      await this.loadPlaygrounds(e.lngLat.lat, e.lngLat.lng)
     })
   }
 
+  private async loadPlaygrounds(lat: number, lon: number) {
+    if (this.isLoading) {
+      return
+    }
+    this.addPinToMap(lat, lon)
+    this.isLoading = true
+    this.playgroundService.loadPlaygroundWithLatLng(
+      lat,
+      lon,
+      this.searchRange,
+      async (success, result) => {
+        this.isLoading = false
+        if (success && result) {
+          this.addPlaygroundResultToMap(result)
+          if (result.playgrounds.length === 0) {
+            await this.showNoPlaygroundsToast()
+          }
+        } else {
+          await this.showRequestFailedToast(async () => {
+            await this.loadPlaygrounds(lat, lon)
+          })
+        }
+      }
+    )
+  }
+
   private addPlaygroundResultToMap(result: PlaygroundResult) {
-    this.addBoundingBoxPolygon(result.boundingBox)
+    this.currentPlaygroundResult = result
+    this.addPinToMap(result.lat, result.lon)
     this.addPlaygroundsToMap(
       result.playgrounds.filter((p) => p.isPrivate),
       true
@@ -105,7 +126,7 @@ export class MapPage implements OnInit {
     })
   }
 
-  private addPinToMap(lon: number, lat: number) {
+  private addPinToMap(lat: number, lon: number) {
     const pinSource = this.map.getSource('pin')
     const pinData = {
       type: 'Feature',
@@ -135,36 +156,43 @@ export class MapPage implements OnInit {
         },
       })
     }
-  }
 
-  private addBoundingBoxPolygon(boundingBox: BBox) {
-    const boundingBoxData = [
-      [boundingBox[0], boundingBox[1]],
-      [boundingBox[2], boundingBox[1]],
-      [boundingBox[2], boundingBox[3]],
-      [boundingBox[0], boundingBox[3]],
-    ]
-    const boundingBoxSource = this.map.getSource('playgrounds-bounding-box')
-    if (boundingBoxSource) {
-      boundingBoxSource.setCoordinates(boundingBoxData)
+    const radiusData = Turf.circle(
+      Turf.point([lon, lat]),
+      (this.searchRange / 1000) * 1.1,
+      {
+        steps: 64,
+        units: 'kilometers',
+      }
+    )
+    const radiusSource = this.map.getSource('pin-radius')
+    if (radiusSource) {
+      radiusSource.setData(radiusData)
     } else {
-      this.map.addSource('playgrounds-bounding-box', {
-        type: 'image',
-        url: 'assets/bounding-box.png',
-        coordinates: boundingBoxData,
+      this.map.addSource('pin-radius', {
+        type: 'geojson',
+        data: radiusData,
       })
     }
-    if (!this.map.getLayer('playgrounds-bounding-box')) {
-      // Add a new layer to visualize the polygon.
+
+    if (!this.map.getLayer('pin-radius')) {
       this.map.addLayer({
-        id: 'playgrounds-bounding-box',
-        type: 'raster',
-        source: 'playgrounds-bounding-box',
-        layout: {},
+        id: 'pin-radius',
+        type: 'fill',
+        source: 'pin-radius',
         paint: {
-          'raster-fade-duration': 0,
-          'raster-opacity': 0.05,
-          'raster-contrast': 0.75,
+          'fill-color': '#0084db',
+          'fill-opacity': 0.1,
+        },
+      })
+      this.map.addLayer({
+        id: 'pin-radius-outline',
+        type: 'line',
+        source: 'pin-radius',
+        paint: {
+          'line-color': '#0084db',
+          'line-width': 3,
+          'line-opacity': 0.25,
         },
       })
     }
@@ -219,26 +247,45 @@ export class MapPage implements OnInit {
 
   async didTapSearch() {
     this.isSearchActive = !this.isSearchActive
-    if (this.isSearchActive) {
-      await this.openSearchModal()
-    }
   }
 
   didTapCancelSearch() {
     this.isSearchActive = false
-    if (this.currentModal) this.currentModal.dismiss()
   }
 
-  async openSearchModal() {
-    const modal = await this.modalController.create({
-      component: SearchComponent,
-      cssClass: 'auto-height',
-      swipeToClose: true,
-      breakpoints: [0, 0.9],
-      initialBreakpoint: 0.9,
-    })
-    modal.present()
+  didChangeSearchRange() {
+    if (this.currentPlaygroundResult) {
+      this.addPinToMap(
+        this.currentPlaygroundResult.lat,
+        this.currentPlaygroundResult.lon
+      )
+    }
+  }
 
-    this.currentModal = modal
+  private async showRequestFailedToast(repeatHandler: () => void) {
+    const button: ToastButton = {
+      text: 'Retry',
+      icon: 'repeat',
+      side: 'end',
+      handler: repeatHandler,
+    }
+    const toast = await this.toastController.create({
+      icon: 'warning',
+      message: 'Failed to find playgrounds…',
+      color: 'danger',
+      buttons: [button],
+      duration: 10000,
+    })
+    await toast.present()
+  }
+
+  private async showNoPlaygroundsToast() {
+    const toast = await this.toastController.create({
+      icon: 'search',
+      message: 'Looks like there are no playgrounds around here…',
+      color: 'warning',
+      duration: 5000,
+    })
+    await toast.present()
   }
 }

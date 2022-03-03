@@ -1,11 +1,7 @@
 <ion-content [fullscreen]="true">
   <div id="mapbox"></div>
-  <div id="loading" *ngIf="isLoading">
-    <ion-progress-bar type="indeterminate"></ion-progress-bar>
-    <h2>Loading playgrounds…</h2>
-  </div>
-  <div id="search" *ngIf="isSearchActive">
-    <h5>LAT / LON</h5>
+  <div id="search" *ngIf="isSearchActive && !isLoading">
+    <h5>{{ currentLatLngString() }}</h5>
     <ion-item>
       <ion-range
         min="100"
@@ -14,13 +10,19 @@
         snaps
         ticks="false"
         [(ngModel)]="searchRange"
+        (ionChange)="didChangeSearchRange()"
       ></ion-range>
       <ion-chip item-end>{{ formattedSearchRange() }}</ion-chip>
     </ion-item>
+    <p id="hint">Tap anywhere on the map to find nearby playground…</p>
+  </div>
+  <div id="loading" *ngIf="isLoading">
+    <ion-progress-bar type="indeterminate"></ion-progress-bar>
+    <h2>Loading playgrounds…</h2>
   </div>
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="didTapSearch()" size="small">
-      <ion-icon name="search"></ion-icon>
+      <ion-icon name="search-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 </ion-content>

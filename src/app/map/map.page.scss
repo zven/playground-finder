@@ -36,4 +36,14 @@
   ion-item {
     --background: transparent;
   }
+  h5 {
+    margin-top: var(--ion-safe-area-top);
+    text-align: center;
+    padding-top: 0.5em;
+  }
+}
+
+#hint {
+  text-align: center;
+  color: #0000006c;
 }

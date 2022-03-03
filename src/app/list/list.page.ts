@@ -1,6 +1,8 @@
 import { AfterViewInit, Component } from '@angular/core'
+import { distance } from '@turf/turf'
 import {
   Playground,
+  PlaygroundResult,
   PlaygroundService,
 } from '../service/playground-service/playground.service'
 
@@ -10,13 +12,35 @@ import {
   styleUrls: ['list.page.scss'],
 })
 export class ListPage implements AfterViewInit {
-  playgrounds: Playground[] = []
+  playgroundResult: PlaygroundResult
   constructor(private playgroundService: PlaygroundService) {}
 
   ngAfterViewInit(): void {
-    const cachedResult = this.playgroundService.loadCachedPlaygroundResult()
-    if (cachedResult) {
-      this.playgrounds = cachedResult.playgrounds
+    this.playgroundResult = this.playgroundService.loadCachedPlaygroundResult()
+  }
+
+  sortedPlaygrounds(): Playground[] {
+    if (this.playgroundResult) {
+      return this.playgroundResult.playgrounds.sort((a, b) => {
+        return this.getDistance(a) - this.getDistance(b)
+      })
     }
+    return []
+  }
+
+  getDistanceString(playground: Playground): string {
+    if (this.playgroundResult) {
+      const distance = this.getDistance(playground)
+      return `${distance.toFixed(2)} km`
+    }
+    return 'N/A'
+  }
+
+  private getDistance(playground: Playground): number {
+    return distance(
+      [this.playgroundResult.lon, this.playgroundResult.lat],
+      [playground.lon, playground.lat],
+      { units: 'kilometers' }
+    )
   }
 }

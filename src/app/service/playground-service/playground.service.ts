@@ -14,6 +14,9 @@ export class Playground {
 
 export class PlaygroundResult {
   playgrounds: Playground[]
+  lat: number
+  lon: number
+  searchRange: number
   boundingBox?: BBox
 }
 
@@ -42,18 +45,27 @@ export class PlaygroundService {
   constructor(private httpClient: HttpClient) {}
 
   loadPlaygroundWithLatLng(
-    lng: number,
     lat: number,
-    radiusMeters: number,
+    lon: number,
+    searchRange: number,
     callback: (success: boolean, result: PlaygroundResult) => void
   ) {
-    const p = point([lng, lat])
-    const pointBuffer = buffer(p, radiusMeters, { units: 'meters' })
+    const p = point([lon, lat])
+    const pointBuffer = buffer(p, searchRange, { units: 'meters' })
     const boundingBox = bbox(pointBuffer)
-    this.loadPlaygroundsWithBoundingBox(boundingBox, callback)
+    this.loadPlaygroundsWithBoundingBox(
+      lat,
+      lon,
+      searchRange,
+      boundingBox,
+      callback
+    )
   }
 
-  loadPlaygroundsWithBoundingBox(
+  private loadPlaygroundsWithBoundingBox(
+    lat: number,
+    lon: number,
+    searchRange: number,
     boundingBox: BBox,
     callback: (success: boolean, result: PlaygroundResult) => void
   ) {
@@ -61,13 +73,19 @@ export class PlaygroundService {
     this.httpClient.get(request).subscribe(
       async (response) => {
         const playgrounds = this.getPlaygroundFromJSON(response)
-        const playgroundResult = { playgrounds, boundingBox }
+        const playgroundResult = {
+          playgrounds,
+          lat,
+          lon,
+          searchRange,
+          boundingBox,
+        }
         callback(true, playgroundResult)
         this.cachePlaygroundResult(playgroundResult)
       },
       (error) => {
         console.error(`request failed: ${JSON.stringify(error)}`)
-        callback(false, { playgrounds: [], boundingBox })
+        callback(false, { playgrounds: [], lat, lon, searchRange, boundingBox })
       }
     )
   }
