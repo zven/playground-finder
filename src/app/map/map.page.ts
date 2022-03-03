@@ -3,6 +3,7 @@ import { ModalController } from '@ionic/angular'
 import { SearchComponent } from '../search/search.component'
 import {
   Playground,
+  PlaygroundResult,
   PlaygroundService,
 } from '../service/playground-service/playground.service'
 
@@ -21,6 +22,11 @@ export class MapPage implements OnInit {
 
   isLoading: boolean = false
   isSearchActive: boolean = false
+  searchRange: number = 2000
+
+  formattedSearchRange(): string {
+    return `${(this.searchRange / 1000).toFixed(1)} km`
+  }
 
   constructor(
     private playgroundService: PlaygroundService,
@@ -57,6 +63,11 @@ export class MapPage implements OnInit {
         if (error) throw error
         this.map.addImage('bounding-box', image)
       })
+
+      const cachedResult = this.playgroundService.loadCachedPlaygroundResult()
+      if (cachedResult) {
+        this.addPlaygroundResultToMap(cachedResult)
+      }
     })
 
     this.map.on('click', async (e) => {
@@ -68,25 +79,29 @@ export class MapPage implements OnInit {
       this.playgroundService.loadPlaygroundWithLatLng(
         e.lngLat.lng,
         e.lngLat.lat,
-        500,
-        async (success, result, boundingBox) => {
+        this.searchRange,
+        async (success, result) => {
           this.isLoading = false
           if (success && result) {
-            this.addBoundingBoxPolygon(boundingBox)
-            this.addPlaygroundsToMap(
-              result.filter((p) => p.isPrivate),
-              true
-            )
-            this.addPlaygroundsToMap(
-              result.filter((p) => !p.isPrivate),
-              false
-            )
-            this.map.fitBounds(boundingBox, {
-              padding: 20,
-            })
+            this.addPlaygroundResultToMap(result)
           }
         }
       )
+    })
+  }
+
+  private addPlaygroundResultToMap(result: PlaygroundResult) {
+    this.addBoundingBoxPolygon(result.boundingBox)
+    this.addPlaygroundsToMap(
+      result.playgrounds.filter((p) => p.isPrivate),
+      true
+    )
+    this.addPlaygroundsToMap(
+      result.playgrounds.filter((p) => !p.isPrivate),
+      false
+    )
+    this.map.fitBounds(result.boundingBox, {
+      padding: 20,
     })
   }
 

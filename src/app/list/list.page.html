@@ -11,24 +11,38 @@
     </ion-toolbar>
   </ion-header>
 
-  <div>
-    <ion-list>
-      <ion-item *ngFor="let _ of [].constructor(20)">
-        <ion-avatar slot="start">
-          <ion-skeleton-text animated></ion-skeleton-text>
-        </ion-avatar>
-        <ion-label>
-          <h3>
-            <ion-skeleton-text animated style="width: 50%"></ion-skeleton-text>
-          </h3>
-          <p>
-            <ion-skeleton-text animated style="width: 80%"></ion-skeleton-text>
-          </p>
-          <p>
-            <ion-skeleton-text animated style="width: 60%"></ion-skeleton-text>
-          </p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
-  </div>
+  <ion-list *ngIf="playgrounds.length === 0">
+    <ion-item *ngFor="let _ of [].constructor(20)">
+      <ion-avatar slot="start">
+        <ion-skeleton-text animated></ion-skeleton-text>
+      </ion-avatar>
+      <ion-label>
+        <h3>
+          <ion-skeleton-text animated style="width: 50%"></ion-skeleton-text>
+        </h3>
+        <p>
+          <ion-skeleton-text animated style="width: 30%"></ion-skeleton-text>
+        </p>
+      </ion-label>
+      <ion-chip slot="end">
+        <ion-skeleton-text animated style="width: 5em"></ion-skeleton-text>
+      </ion-chip>
+    </ion-item>
+  </ion-list>
+
+  <ion-list *ngIf="playgrounds.length !== 0">
+    <ion-item *ngFor="let playground of playgrounds">
+      <ion-avatar slot="start">
+        <img *ngIf="playground.isPrivate" src="assets/balloon-lock.png" />
+        <img *ngIf="!playground.isPrivate" src="assets/balloon.png" />
+      </ion-avatar>
+      <ion-label>
+        <h3>{{ playground.name }}</h3>
+        <p>{{ playground.address }}</p>
+      </ion-label>
+      <ion-chip slot="end">
+        {{ playground.lat.toFixed(3) }} / {{ playground.lon.toFixed(3) }}
+      </ion-chip>
+    </ion-item>
+  </ion-list>
 </ion-content>

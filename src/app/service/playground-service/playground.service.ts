@@ -12,6 +12,11 @@ export class Playground {
   isPrivate: boolean
 }
 
+export class PlaygroundResult {
+  playgrounds: Playground[]
+  boundingBox?: BBox
+}
+
 type PlaygroundsResponse = {
   version: number
   generator: string
@@ -32,6 +37,7 @@ export class PlaygroundService {
   static API_BASE_URL = 'https://overpass-api.de/api/interpreter'
   static API_DATA_PARAM = 'data'
   static API_DATA_JSON = '[out:json];'
+  static PLAYGROUNDS_CACHE = 'playgrounds_cache'
 
   constructor(private httpClient: HttpClient) {}
 
@@ -39,11 +45,7 @@ export class PlaygroundService {
     lng: number,
     lat: number,
     radiusMeters: number,
-    callback: (
-      success: boolean,
-      result: Playground[],
-      boundingBox: BBox
-    ) => void
+    callback: (success: boolean, result: PlaygroundResult) => void
   ) {
     const p = point([lng, lat])
     const pointBuffer = buffer(p, radiusMeters, { units: 'meters' })
@@ -53,21 +55,19 @@ export class PlaygroundService {
 
   loadPlaygroundsWithBoundingBox(
     boundingBox: BBox,
-    callback: (
-      success: boolean,
-      result: Playground[],
-      boundingBox: BBox
-    ) => void
+    callback: (success: boolean, result: PlaygroundResult) => void
   ) {
     const request = this.createRequestUrl(boundingBox)
     this.httpClient.get(request).subscribe(
       async (response) => {
         const playgrounds = this.getPlaygroundFromJSON(response)
-        callback(true, playgrounds, boundingBox)
+        const playgroundResult = { playgrounds, boundingBox }
+        callback(true, playgroundResult)
+        this.cachePlaygroundResult(playgroundResult)
       },
       (error) => {
         console.error(`request failed: ${JSON.stringify(error)}`)
-        callback(false, undefined, boundingBox)
+        callback(false, { playgrounds: [], boundingBox })
       }
     )
   }
@@ -88,5 +88,21 @@ export class PlaygroundService {
       p.isPrivate = playground.tags.access === 'private'
       return p
     })
+  }
+
+  private cachePlaygroundResult(playgroundResult: PlaygroundResult) {
+    localStorage.setItem(
+      PlaygroundService.PLAYGROUNDS_CACHE,
+      JSON.stringify(playgroundResult)
+    )
+  }
+
+  loadCachedPlaygroundResult(): PlaygroundResult {
+    let result = localStorage.getItem(PlaygroundService.PLAYGROUNDS_CACHE)
+    try {
+      return JSON.parse(result) as PlaygroundResult
+    } catch (error) {
+      return undefined
+    }
   }
 }

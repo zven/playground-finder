@@ -4,8 +4,22 @@
     <ion-progress-bar type="indeterminate"></ion-progress-bar>
     <h2>Loading playgrounds…</h2>
   </div>
+  <div id="search" *ngIf="isSearchActive">
+    <h5>LAT / LON</h5>
+    <ion-item>
+      <ion-range
+        min="100"
+        max="10000"
+        step="100"
+        snaps
+        ticks="false"
+        [(ngModel)]="searchRange"
+      ></ion-range>
+      <ion-chip item-end>{{ formattedSearchRange() }}</ion-chip>
+    </ion-item>
+  </div>
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="openSearchModal()" size="small">
+    <ion-fab-button (click)="didTapSearch()" size="small">
       <ion-icon name="search"></ion-icon>
     </ion-fab-button>
   </ion-fab>
