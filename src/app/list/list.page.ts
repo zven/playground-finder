@@ -1,10 +1,12 @@
 import { AfterViewInit, Component } from '@angular/core'
+import { Router } from '@angular/router'
 import { distance } from '@turf/turf'
 import {
   Playground,
   PlaygroundResult,
   PlaygroundService,
 } from '../service/playground-service/playground.service'
+import { Tab } from '../tabs/tabs-routing.module'
 
 @Component({
   selector: 'app-list',
@@ -13,7 +15,10 @@ import {
 })
 export class ListPage implements AfterViewInit {
   playgroundResult: PlaygroundResult
-  constructor(private playgroundService: PlaygroundService) {}
+  constructor(
+    private playgroundService: PlaygroundService,
+    private router: Router
+  ) {}
 
   ngAfterViewInit(): void {
     this.playgroundResult = this.playgroundService.loadCachedPlaygroundResult()
@@ -42,5 +47,11 @@ export class ListPage implements AfterViewInit {
       [playground.lon, playground.lat],
       { units: 'kilometers' }
     )
+  }
+
+  showPlayground(playground: Playground) {
+    this.router.navigate([`../${Tab.Map}`], {
+      state: { center: [playground.lon, playground.lat] },
+    })
   }
 }

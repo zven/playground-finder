@@ -48,6 +48,15 @@ export class MapPage implements OnInit {
     return ''
   }
 
+  mapPadding(): { left: number; right: number; top: number; bottom: number } {
+    return {
+      left: 50,
+      right: 50,
+      top: this.isSearchActive ? 250 : 100,
+      bottom: 100,
+    }
+  }
+
   currentPlaygroundResult: PlaygroundResult = undefined
 
   constructor(
@@ -119,6 +128,17 @@ export class MapPage implements OnInit {
     })
   }
 
+  ionViewDidEnter() {
+    if (history.state.center) {
+      this.map.flyTo({
+        padding: this.mapPadding,
+        zoom: 18,
+        center: history.state.center,
+        essential: true,
+      })
+    }
+  }
+
   private async loadPlaygrounds() {
     if (this.isLoadingPlaygrounds || !this.markerLngLat) {
       return
@@ -156,14 +176,8 @@ export class MapPage implements OnInit {
       result.playgrounds.filter((p) => !p.isPrivate),
       false
     )
-    const padding = {
-      left: 50,
-      right: 50,
-      top: this.isSearchActive ? 250 : 100,
-      bottom: 100,
-    }
     this.map.fitBounds(result.boundingBox, {
-      padding,
+      padding: this.mapPadding,
     })
   }
 

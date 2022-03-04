@@ -35,7 +35,10 @@
   <ion-list
     *ngIf="playgroundResult && playgroundResult.playgrounds.length !== 0"
   >
-    <ion-item *ngFor="let playground of sortedPlaygrounds()">
+    <ion-item
+      *ngFor="let playground of sortedPlaygrounds()"
+      (click)="showPlayground(playground)"
+    >
       <ion-avatar slot="start">
         <img *ngIf="playground.isPrivate" src="assets/balloon-lock.png" />
         <img *ngIf="!playground.isPrivate" src="assets/balloon.png" />
