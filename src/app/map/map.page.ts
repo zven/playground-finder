@@ -8,6 +8,7 @@ import {
 
 import * as MapboxGl from 'mapbox-gl'
 import * as Turf from '@turf/turf'
+import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-geocoding.service'
 
 @Component({
   selector: 'app-map',
@@ -23,20 +24,26 @@ export class MapPage implements OnInit {
   static INITIAL_ZOOM = 12
 
   isInitialLoading: boolean = true
-  isLoading: boolean = false
-  isSearchActive: boolean = true
+  isLoadingPlaygrounds: boolean = false
+  isLoadingMarkerAddress: boolean = false
+  isSearchActive: boolean = false
   hasUpdatedSearchParams: boolean = false
   searchRange: number = 2000
   markerLngLat: [number, number]
+  markerAddress: string
 
   formattedSearchRange(): string {
     return `${(this.searchRange / 1000).toFixed(1)} km`
   }
 
-  currentLatLngString(): string {
-    if (this.currentPlaygroundResult) {
-      return `${this.currentPlaygroundResult.lat.toFixed(3)} /
-        ${this.currentPlaygroundResult.lon.toFixed(3)}`
+  currentMarkerString(): string {
+    if (this.markerAddress) {
+      return this.markerAddress
+    }
+    if (this.markerLngLat) {
+      return `${this.markerLngLat[1].toFixed(
+        3
+      )} /  ${this.markerLngLat[0].toFixed(3)}`
     }
     return ''
   }
@@ -45,6 +52,7 @@ export class MapPage implements OnInit {
 
   constructor(
     private playgroundService: PlaygroundService,
+    private geocodingService: ReverseGeocodingService,
     private toastController: ToastController
   ) {
     MapboxGl.accessToken = this.mapboxToken
@@ -81,6 +89,7 @@ export class MapPage implements OnInit {
         this.searchRange = cachedResult.searchRange
         this.addPlaygroundResultToMap(cachedResult)
         this.addPinRadiusToMap()
+        this.runGeocoding()
       } else {
         this.markerLngLat = MapPage.INITIAL_LON_LAT
       }
@@ -95,6 +104,7 @@ export class MapPage implements OnInit {
       marker.on('dragend', () => {
         const lngLat = marker.getLngLat()
         this.markerLngLat = [lngLat.lng, lngLat.lat]
+        this.runGeocoding()
         this.addPinRadiusToMap()
         this.hasUpdatedSearchParams = true
       })
@@ -102,6 +112,7 @@ export class MapPage implements OnInit {
       this.map.on('click', async (e) => {
         this.markerLngLat = [e.lngLat.lng, e.lngLat.lat]
         marker.setLngLat(this.markerLngLat)
+        this.runGeocoding()
         this.addPinRadiusToMap()
         this.hasUpdatedSearchParams = true
       })
@@ -109,17 +120,17 @@ export class MapPage implements OnInit {
   }
 
   private async loadPlaygrounds() {
-    if (this.isLoading || !this.markerLngLat) {
+    if (this.isLoadingPlaygrounds || !this.markerLngLat) {
       return
     }
     this.addPinRadiusToMap()
-    this.isLoading = true
+    this.isLoadingPlaygrounds = true
     this.playgroundService.loadPlaygroundWithLatLng(
       this.markerLngLat[1],
       this.markerLngLat[0],
       this.searchRange,
       async (success, result) => {
-        this.isLoading = false
+        this.isLoadingPlaygrounds = false
         this.hasUpdatedSearchParams = false
         if (success && result) {
           this.addPlaygroundResultToMap(result)
@@ -248,16 +259,8 @@ export class MapPage implements OnInit {
     }
   }
 
-  async didTapSearch() {
-    this.isSearchActive = !this.isSearchActive
-  }
-
   async didTapSearchPlaygrounds() {
     await this.loadPlaygrounds()
-  }
-
-  didTapCancelSearch() {
-    this.isSearchActive = false
   }
 
   didChangeSearchRange() {
@@ -267,6 +270,10 @@ export class MapPage implements OnInit {
     }
     this.hasUpdatedSearchParams = true
     this.addPinRadiusToMap()
+  }
+
+  didToggleSearch() {
+    this.isSearchActive = !this.isSearchActive
   }
 
   private async showRequestFailedToast(repeatHandler: () => void) {
@@ -293,5 +300,20 @@ export class MapPage implements OnInit {
       duration: 5000,
     })
     await toast.present()
+  }
+
+  private runGeocoding() {
+    if (this.markerLngLat) {
+      this.isLoadingMarkerAddress = true
+      this.geocodingService.reverseGeocode(
+        [this.markerLngLat[1], this.markerLngLat[0]],
+        (success, geocoding) => {
+          this.isLoadingMarkerAddress = false
+          if (success && geocoding) {
+            this.markerAddress = geocoding.addressDisplayName
+          }
+        }
+      )
+    }
   }
 }

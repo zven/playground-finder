@@ -17,6 +17,7 @@ export class PlaygroundResult {
   lat: number
   lon: number
   searchRange: number
+  address?: string
   boundingBox?: BBox
 }
 

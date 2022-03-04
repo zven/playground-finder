@@ -7,6 +7,7 @@ import { MapPage } from './map.page'
 import { MapPageRoutingModule } from './map-routing.module'
 import { PlaygroundService } from '../service/playground-service/playground.service'
 import { HttpClientModule } from '@angular/common/http'
+import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-geocoding.service'
 
 @NgModule({
   imports: [
@@ -16,7 +17,7 @@ import { HttpClientModule } from '@angular/common/http'
     MapPageRoutingModule,
     HttpClientModule,
   ],
-  providers: [PlaygroundService],
+  providers: [PlaygroundService, ReverseGeocodingService],
   declarations: [MapPage],
 })
 export class Tab1PageModule {}
