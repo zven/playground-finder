@@ -1,7 +1,14 @@
 <ion-content [fullscreen]="true">
   <div id="mapbox"></div>
   <div id="search" *ngIf="isSearchActive && !isLoading">
+    <ion-icon
+      id="search-close-button"
+      slot="icon-only"
+      name="close"
+      (click)="isSearchActive = false"
+    ></ion-icon>
     <h5>{{ currentLatLngString() }}</h5>
+
     <ion-item>
       <ion-range
         min="100"
@@ -14,14 +21,27 @@
       ></ion-range>
       <ion-chip item-end>{{ formattedSearchRange() }}</ion-chip>
     </ion-item>
-    <p id="hint">Tap anywhere on the map to find nearby playground…</p>
+    <p id="hint" *ngIf="!hasUpdatedSearchParams">
+      Move the marker on the map and find nearby playgrounds…
+    </p>
+    <ion-button
+      id="search-button"
+      *ngIf="hasUpdatedSearchParams && !isLoading"
+      expand="block"
+      (click)="didTapSearchPlaygrounds()"
+    >
+      Look for playgrounds in this area
+    </ion-button>
   </div>
   <div id="loading" *ngIf="isLoading">
     <ion-progress-bar type="indeterminate"></ion-progress-bar>
     <h2>Loading playgrounds…</h2>
   </div>
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="didTapSearch()" size="small">
+  <ion-fab vertical="top" horizontal="end" slot="fixed">
+    <ion-fab-button
+      (click)="didTapSearch()"
+      *ngIf="!isSearchActive && !isLoading"
+    >
       <ion-icon name="search-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>

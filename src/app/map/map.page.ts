@@ -17,10 +17,17 @@ import * as Turf from '@turf/turf'
 export class MapPage implements OnInit {
   private mapboxToken = 'API_KEY'
   private map: MapboxGl.Map
+  static INITIAL_LON_LAT: [number, number] = [
+    7.6277627964892165, 51.963484569674435,
+  ]
+  static INITIAL_ZOOM = 12
 
+  isInitialLoading: boolean = true
   isLoading: boolean = false
   isSearchActive: boolean = true
+  hasUpdatedSearchParams: boolean = false
   searchRange: number = 2000
+  markerLngLat: [number, number]
 
   formattedSearchRange(): string {
     return `${(this.searchRange / 1000).toFixed(1)} km`
@@ -47,18 +54,14 @@ export class MapPage implements OnInit {
     this.map = new MapboxGl.Map({
       container: 'mapbox',
       style: 'mapbox://styles/mapbox/streets-v11',
-      zoom: 12,
-      center: [7.6277627964892165, 51.963484569674435],
+      zoom: MapPage.INITIAL_ZOOM,
+      center: MapPage.INITIAL_LON_LAT,
     })
 
     this.map.on('load', () => {
       this.map.resize()
       window['map'] = this.map
 
-      this.map.loadImage('assets/pin.png', (error, image) => {
-        if (error) throw error
-        this.map.addImage('pin-icon', image)
-      })
       this.map.loadImage('assets/balloon.png', (error, image) => {
         if (error) throw error
         this.map.addImage('playground-icon', image)
@@ -74,28 +77,50 @@ export class MapPage implements OnInit {
 
       const cachedResult = this.playgroundService.loadCachedPlaygroundResult()
       if (cachedResult) {
+        this.markerLngLat = [cachedResult.lon, cachedResult.lat]
         this.searchRange = cachedResult.searchRange
         this.addPlaygroundResultToMap(cachedResult)
+        this.addPinRadiusToMap()
+      } else {
+        this.markerLngLat = MapPage.INITIAL_LON_LAT
       }
-    })
 
-    this.map.on('click', async (e) => {
-      await this.loadPlaygrounds(e.lngLat.lat, e.lngLat.lng)
+      const marker = new MapboxGl.Marker({
+        draggable: true,
+        color: '#FFBB01',
+      })
+        .setLngLat(this.markerLngLat)
+        .addTo(this.map)
+
+      marker.on('dragend', () => {
+        const lngLat = marker.getLngLat()
+        this.markerLngLat = [lngLat.lng, lngLat.lat]
+        this.addPinRadiusToMap()
+        this.hasUpdatedSearchParams = true
+      })
+
+      this.map.on('click', async (e) => {
+        this.markerLngLat = [e.lngLat.lng, e.lngLat.lat]
+        marker.setLngLat(this.markerLngLat)
+        this.addPinRadiusToMap()
+        this.hasUpdatedSearchParams = true
+      })
     })
   }
 
-  private async loadPlaygrounds(lat: number, lon: number) {
-    if (this.isLoading) {
+  private async loadPlaygrounds() {
+    if (this.isLoading || !this.markerLngLat) {
       return
     }
-    this.addPinToMap(lat, lon)
+    this.addPinRadiusToMap()
     this.isLoading = true
     this.playgroundService.loadPlaygroundWithLatLng(
-      lat,
-      lon,
+      this.markerLngLat[1],
+      this.markerLngLat[0],
       this.searchRange,
       async (success, result) => {
         this.isLoading = false
+        this.hasUpdatedSearchParams = false
         if (success && result) {
           this.addPlaygroundResultToMap(result)
           if (result.playgrounds.length === 0) {
@@ -103,7 +128,7 @@ export class MapPage implements OnInit {
           }
         } else {
           await this.showRequestFailedToast(async () => {
-            await this.loadPlaygrounds(lat, lon)
+            await this.loadPlaygrounds()
           })
         }
       }
@@ -112,7 +137,6 @@ export class MapPage implements OnInit {
 
   private addPlaygroundResultToMap(result: PlaygroundResult) {
     this.currentPlaygroundResult = result
-    this.addPinToMap(result.lat, result.lon)
     this.addPlaygroundsToMap(
       result.playgrounds.filter((p) => p.isPrivate),
       true
@@ -121,44 +145,23 @@ export class MapPage implements OnInit {
       result.playgrounds.filter((p) => !p.isPrivate),
       false
     )
+    const padding = {
+      left: 50,
+      right: 50,
+      top: this.isSearchActive ? 250 : 100,
+      bottom: 100,
+    }
     this.map.fitBounds(result.boundingBox, {
-      padding: 20,
+      padding,
     })
   }
 
-  private addPinToMap(lat: number, lon: number) {
-    const pinSource = this.map.getSource('pin')
-    const pinData = {
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [lon, lat],
-      },
+  private addPinRadiusToMap() {
+    if (!this.markerLngLat) {
+      return
     }
-    if (pinSource) {
-      pinSource.setData(pinData)
-    } else {
-      this.map.addSource('pin', {
-        type: 'geojson',
-        data: pinData,
-      })
-    }
-    if (!this.map.getLayer('pin')) {
-      this.map.addLayer({
-        id: 'pin',
-        type: 'symbol',
-        source: 'pin',
-        layout: {
-          'icon-image': 'pin-icon',
-          'icon-anchor': 'bottom',
-          'icon-allow-overlap': true,
-          'icon-size': 0.3,
-        },
-      })
-    }
-
     const radiusData = Turf.circle(
-      Turf.point([lon, lat]),
+      Turf.point(this.markerLngLat),
       (this.searchRange / 1000) * 1.1,
       {
         steps: 64,
@@ -249,22 +252,25 @@ export class MapPage implements OnInit {
     this.isSearchActive = !this.isSearchActive
   }
 
+  async didTapSearchPlaygrounds() {
+    await this.loadPlaygrounds()
+  }
+
   didTapCancelSearch() {
     this.isSearchActive = false
   }
 
   didChangeSearchRange() {
-    if (this.currentPlaygroundResult) {
-      this.addPinToMap(
-        this.currentPlaygroundResult.lat,
-        this.currentPlaygroundResult.lon
-      )
+    if (this.isInitialLoading) {
+      this.isInitialLoading = false
+      return
     }
+    this.hasUpdatedSearchParams = true
+    this.addPinRadiusToMap()
   }
 
   private async showRequestFailedToast(repeatHandler: () => void) {
     const button: ToastButton = {
-      text: 'Retry',
       icon: 'repeat',
       side: 'end',
       handler: repeatHandler,
