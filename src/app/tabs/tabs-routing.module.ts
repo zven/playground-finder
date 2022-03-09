@@ -16,17 +16,17 @@ const routes: Routes = [
       {
         path: Tab.Map,
         loadChildren: () =>
-          import('../map/map.module').then((m) => m.Tab1PageModule),
+          import('../map/map.module').then((m) => m.MapModule),
       },
       {
         path: Tab.List,
         loadChildren: () =>
-          import('../list/list.module').then((m) => m.Tab2PageModule),
+          import('../list/list.module').then((m) => m.ListModule),
       },
       {
         path: Tab.Settings,
         loadChildren: () =>
-          import('../settings/settings.module').then((m) => m.Tab3PageModule),
+          import('../settings/settings.module').then((m) => m.SettingsModule),
       },
       {
         path: '',

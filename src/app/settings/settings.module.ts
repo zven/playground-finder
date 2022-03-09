@@ -6,6 +6,8 @@ import { FormsModule } from '@angular/forms'
 import { SettingsPage } from './settings.page'
 
 import { SettingsPageRoutingModule } from './settings-routing.module'
+import { TranslateModule } from '@ngx-translate/core'
+import { SettingsDetailComponent } from './settings-detail/settings-detail/settings-detail.component'
 
 @NgModule({
   imports: [
@@ -14,7 +16,8 @@ import { SettingsPageRoutingModule } from './settings-routing.module'
     FormsModule,
     RouterModule.forChild([{ path: '', component: SettingsPage }]),
     SettingsPageRoutingModule,
+    TranslateModule,
   ],
-  declarations: [SettingsPage],
+  declarations: [SettingsPage, SettingsDetailComponent],
 })
-export class Tab3PageModule {}
+export class SettingsModule {}

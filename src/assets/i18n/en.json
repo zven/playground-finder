@@ -1,0 +1,40 @@
+{
+  "title": "Playground Finder",
+  "general": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "share": "Share",
+    "export": "Export",
+    "view": "View",
+    "back": "Back",
+    "done": "Done",
+    "ok": "OK"
+  },
+  "location-option": {
+    "accuracy": {
+      "title": "Accuracy",
+      "subtitle": "How accurate is your shared location?",
+      "description": "With accuracy, you are able to determine the precision of your device location. The value for accuracy defines a radius, in which the retrieved location usually lays in. Therefore a higher value is more imprecise and potentially has the effect of degrading service quality, while improving your privacy."
+    },
+    "interval": {
+      "title": "Interval",
+      "subtitle": "How often is your location be accessed?",
+      "description": "Using the interval you can determine, how often this app is able to retrieve a new location from your device. A higher value therefore leads to a less frequent retrieval of your devices location. Example: If you've set to 10 Minutes, this means a new location is at maximum retrieved every 10 Minutes. In the meantime the previously retrieved location is used, which of course it might up to 10 Minutes old, which could potentially degrade the service quality."
+    },
+    "playgrounds": {
+      "title": "Playgrounds",
+      "subtitle": "Find playgrounds in your area",
+      "description": "In order to conveniently find playgrounds in your area, we offer to use your devices location. In order to retrieve information about such playgrounds, this app makes use of the Overpass API, which accesses the data of OpenStreetMap. OpenStreetMap primarily is a openly available database of worldwide geographic data and is crowdsourced."
+    },
+    "navigation": {
+      "title": "Navigation",
+      "subtitle": "Continoously use your current location to navigate",
+      "description": "lorem ipsum …"
+    },
+    "addresses": {
+      "title": "Addresses",
+      "subtitle": "Retrieve addresses to your locations",
+      "description": "For the convenience of not only presenting geospatial coordinates but actual addresses, our app makes use of the openly available Nominatim. This resource allows us to match geospatial coordinates to actual addresses – this process is also known as 'reverse geocoding'."
+    }
+  }
+}
