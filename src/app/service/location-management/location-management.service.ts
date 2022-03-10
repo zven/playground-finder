@@ -17,24 +17,24 @@ export class LocationManagementService {
     return [
       {
         type: LocationOptionType.playgrounds,
-        default: true,
+        value: true,
       },
       {
         type: LocationOptionType.navigation,
-        default: false,
+        value: false,
       },
       {
         type: LocationOptionType.addresses,
-        default: false,
+        value: false,
       },
       {
         type: LocationOptionType.accuracy,
-        default: 0,
+        value: 0,
         range: [0, 10000],
       },
       {
         type: LocationOptionType.interval,
-        default: 0,
+        value: 0,
         range: [0, 86400],
       },
     ]

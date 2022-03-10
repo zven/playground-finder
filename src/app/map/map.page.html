@@ -44,8 +44,10 @@
     </ion-button>
   </div>
   <div id="loading" *ngIf="isLoadingPlaygrounds">
-    <ion-progress-bar type="indeterminate"></ion-progress-bar>
-    <h2>Loading playgrounds…</h2>
+    <h4>
+      <ion-spinner color="primary"></ion-spinner>
+      Loading playgrounds…
+    </h4>
   </div>
   <ion-fab
     vertical="top"

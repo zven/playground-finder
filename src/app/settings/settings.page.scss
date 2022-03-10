@@ -1,7 +1,8 @@
 ion-avatar {
-  width: 3em;
-  height: 3em;
-  padding: 0.75em;
+  width: 2em;
+  height: 2em;
+  padding: 0.5em;
+  margin-right: 0.75em;
   background-color: #eeeeee;
   border-radius: 100%;
   ion-icon {
@@ -9,6 +10,16 @@ ion-avatar {
     height: 100%;
     color: gray;
   }
+}
+
+ion-item {
+  --padding-start: 0.75em;
+}
+
+#help-icon {
+  margin-bottom: 3px;
+  color: gray;
+  vertical-align: middle;
 }
 
 h3 {

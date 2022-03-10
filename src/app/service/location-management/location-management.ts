@@ -1,6 +1,6 @@
 export class LocationOption {
   type: LocationOptionType
-  default: any
+  value: any
   range?: [number, number]
 }
 
