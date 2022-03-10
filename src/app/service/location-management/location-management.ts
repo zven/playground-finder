@@ -1,7 +1,6 @@
 export class LocationOption {
   type: LocationOptionType
   value: any
-  range?: [number, number]
 }
 
 export namespace LocationOptionType {
@@ -53,6 +52,20 @@ export namespace LocationOptionType {
       case LocationOptionType.navigation:
       case LocationOptionType.addresses:
         return LocationOptionDataType.boolean
+    }
+  }
+
+  export function range(type: LocationOptionType): [number, number] {
+    switch (type) {
+      case LocationOptionType.accuracy:
+        return [0, 10000]
+
+      case LocationOptionType.interval:
+        return [0, 86400]
+      case LocationOptionType.playgrounds:
+      case LocationOptionType.navigation:
+      case LocationOptionType.addresses:
+        return [0, 0]
     }
   }
 }

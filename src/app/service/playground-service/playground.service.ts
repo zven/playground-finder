@@ -5,6 +5,7 @@ import buffer from '@turf/buffer'
 import bbox from '@turf/bbox'
 
 export class Playground {
+  id: number
   lat: number
   lon: number
   name: string
@@ -101,6 +102,7 @@ export class PlaygroundService {
     const response: PlaygroundsResponse = jsonData
     return response.elements.map((playground) => {
       let p = new Playground()
+      p.id = playground.id
       p.lat = playground.center.lat
       p.lon = playground.center.lon
       p.name = playground.tags.name || 'Playground'

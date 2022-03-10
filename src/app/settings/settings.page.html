@@ -28,9 +28,23 @@
             <ion-icon id="help-icon" name="help-circle-outline"></ion-icon>
           </h3>
           <p>{{ getSubtitle(option.type) | translate }}</p>
-          <ion-range *ngIf="getType(option.type) === 'number'"></ion-range>
+          <ion-range
+            *ngIf="getType(option.type) === 'number'"
+            [min]="getRange(option.type)[0]"
+            [max]="getRange(option.type)[1]"
+            step="10"
+            ticks="false"
+            [(ngModel)]="option.value"
+            (ionChange)="onOptionChange()"
+          >
+          </ion-range>
+          <p class="range-label">{{ getValueLabel(option) }}</p>
         </ion-label>
-        <ion-toggle *ngIf="getType(option.type) === 'boolean'"></ion-toggle>
+        <ion-toggle
+          *ngIf="getType(option.type) === 'boolean'"
+          [(ngModel)]="option.value"
+          (ngModelChange)="onOptionChange()"
+        ></ion-toggle>
       </ion-item>
     </ion-list>
   </div>

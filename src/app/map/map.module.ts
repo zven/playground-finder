@@ -4,10 +4,11 @@ import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { MapPage } from './map.page'
 import { MapPageRoutingModule } from './map-routing.module'
+import { PlaygroundDetailComponent } from '../playground-detail/playground-detail.component'
 
 @NgModule({
   imports: [IonicModule, CommonModule, FormsModule, MapPageRoutingModule],
   providers: [],
-  declarations: [MapPage],
+  declarations: [MapPage, PlaygroundDetailComponent],
 })
 export class MapModule {}

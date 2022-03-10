@@ -1,8 +1,12 @@
 <ion-content [fullscreen]="true">
   <div id="mapbox"></div>
-  <div id="search" *ngIf="isSearchActive && !isLoadingPlaygrounds">
-    <ion-item class="padding-safe-area-top">
-      <ion-icon id="title-icon" name="location-outline"></ion-icon>
+  <div
+    id="search"
+    *ngIf="isSearchActive && !isLoadingPlaygrounds"
+    class="padding-safe-area-top"
+  >
+    <ion-item>
+      <ion-icon id="title-icon" name="compass-outline"></ion-icon>
       <ion-label *ngIf="!isLoadingMarkerAddress">
         {{ currentMarkerString() }}
       </ion-label>
@@ -10,6 +14,11 @@
         Loading address…
         <ion-spinner color="dark" name="lines-small"></ion-spinner>
       </ion-label>
+      <ion-icon
+        name="locate-outline"
+        color="primary"
+        (click)="didClickCurrentLocation()"
+      ></ion-icon>
       <ion-icon
         slot="end"
         name="close-outline"
@@ -43,7 +52,7 @@
       Look for playgrounds in this area
     </ion-button>
   </div>
-  <div id="loading" *ngIf="isLoadingPlaygrounds">
+  <div id="loading" *ngIf="isLoadingPlaygrounds" class="padding-safe-area-top">
     <h4>
       <ion-spinner color="primary"></ion-spinner>
       Loading playgrounds…

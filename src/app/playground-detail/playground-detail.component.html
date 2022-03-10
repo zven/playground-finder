@@ -1,0 +1,34 @@
+<ion-content fullscreen>
+  <ion-avatar>
+    <img *ngIf="playground.isPrivate" src="assets/balloon-lock.png" />
+    <img *ngIf="!playground.isPrivate" src="assets/balloon.png" />
+  </ion-avatar>
+  <ion-card-header>
+    <ion-card-title>{{ playground.name }}</ion-card-title>
+    <ion-card-subtitle>{{ playground.address }}</ion-card-subtitle>
+  </ion-card-header>
+  <ion-card-content>
+    <ion-list>
+      <ion-item>
+        <ion-thumbnail slot="end">
+          <ion-icon
+            *ngIf="playground.isPrivate"
+            name="lock-closed"
+            class="private"
+          ></ion-icon>
+          <ion-icon
+            *ngIf="!playground.isPrivate"
+            name="lock-open"
+            class="public"
+          ></ion-icon>
+        </ion-thumbnail>
+        <ion-label>
+          <h4>Access</h4>
+          <h3 *ngIf="playground.isPrivate">private</h3>
+          <h3 *ngIf="!playground.isPrivate">public</h3>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ion-card-content>
+  <ion-icon id="close-icon" name="close" (click)="onCloseClick()"></ion-icon>
+</ion-content>

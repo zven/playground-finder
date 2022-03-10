@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { ToastButton, ToastController } from '@ionic/angular'
+import { ModalController, ToastButton, ToastController } from '@ionic/angular'
 import {
   Playground,
   PlaygroundResult,
@@ -9,6 +9,9 @@ import {
 import * as MapboxGl from 'mapbox-gl'
 import * as Turf from '@turf/turf'
 import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-geocoding.service'
+import { LocationService } from '../service/location/location.service'
+import { MapIcon, MapSource } from './map'
+import { PlaygroundDetailComponent } from '../playground-detail/playground-detail.component'
 
 @Component({
   selector: 'app-map',
@@ -61,7 +64,9 @@ export class MapPage implements OnInit {
 
   constructor(
     private playgroundService: PlaygroundService,
+    private locationService: LocationService,
     private geocodingService: ReverseGeocodingService,
+    private modalController: ModalController,
     private toastController: ToastController
   ) {
     MapboxGl.accessToken = this.mapboxToken
@@ -81,15 +86,11 @@ export class MapPage implements OnInit {
 
       this.map.loadImage('assets/balloon.png', (error, image) => {
         if (error) throw error
-        this.map.addImage('playground-icon', image)
+        this.map.addImage(MapIcon.playgrounds, image)
       })
       this.map.loadImage('assets/balloon-lock.png', (error, image) => {
         if (error) throw error
-        this.map.addImage('private-playground-icon', image)
-      })
-      this.map.loadImage('assets/bounding-box.png', (error, image) => {
-        if (error) throw error
-        this.map.addImage('bounding-box', image)
+        this.map.addImage(MapIcon.privatePlaygrounds, image)
       })
 
       const cachedResult = this.playgroundService.loadCachedPlaygroundResult()
@@ -103,6 +104,42 @@ export class MapPage implements OnInit {
         this.markerLngLat = MapPage.INITIAL_LON_LAT
       }
 
+      // playgrounds
+      this.map.on(
+        'click',
+        [MapSource.playgrounds, MapSource.privatePlaygrounds],
+        async (e) => {
+          e.originalEvent.preventDefault()
+          this.map.flyTo({
+            center: e.features[0].geometry.coordinates,
+            zoom: 17,
+            speed: 0.5,
+            padding: {
+              top: 0,
+              bottom: 200,
+              left: 0,
+              right: 0,
+            },
+          })
+          this.openPlaygroundDetails(e.features[0].properties.id)
+        }
+      )
+      this.map.on(
+        'mouseenter',
+        [MapSource.playgrounds, MapSource.privatePlaygrounds],
+        () => {
+          this.map.getCanvas().style.cursor = 'pointer'
+        }
+      )
+      this.map.on(
+        'mouseleave',
+        [MapSource.playgrounds, MapSource.privatePlaygrounds],
+        () => {
+          this.map.getCanvas().style.cursor = ''
+        }
+      )
+
+      // positional marker
       const marker = new MapboxGl.Marker({
         draggable: true,
         color: '#FFBB01',
@@ -110,6 +147,11 @@ export class MapPage implements OnInit {
         .setLngLat(this.markerLngLat)
         .addTo(this.map)
 
+      marker.on('drag', () => {
+        const lngLat = marker.getLngLat()
+        this.markerLngLat = [lngLat.lng, lngLat.lat]
+        this.addPinRadiusToMap()
+      })
       marker.on('dragend', () => {
         const lngLat = marker.getLngLat()
         this.markerLngLat = [lngLat.lng, lngLat.lat]
@@ -117,7 +159,6 @@ export class MapPage implements OnInit {
         this.addPinRadiusToMap()
         this.hasUpdatedSearchParams = true
       })
-
       this.map.on('click', async (e) => {
         this.markerLngLat = [e.lngLat.lng, e.lngLat.lat]
         marker.setLngLat(this.markerLngLat)
@@ -193,21 +234,21 @@ export class MapPage implements OnInit {
         units: 'kilometers',
       }
     )
-    const radiusSource = this.map.getSource('pin-radius')
+    const radiusSource = this.map.getSource(MapSource.markerHalo)
     if (radiusSource) {
       radiusSource.setData(radiusData)
     } else {
-      this.map.addSource('pin-radius', {
+      this.map.addSource(MapSource.markerHalo, {
         type: 'geojson',
         data: radiusData,
       })
     }
 
-    if (!this.map.getLayer('pin-radius')) {
+    if (!this.map.getLayer(MapSource.markerHalo)) {
       this.map.addLayer({
-        id: 'pin-radius',
+        id: MapSource.markerHalo,
         type: 'fill',
-        source: 'pin-radius',
+        source: MapSource.markerHalo,
         paint: {
           'fill-color': '#0084db',
           'fill-opacity': 0.1,
@@ -216,7 +257,7 @@ export class MapPage implements OnInit {
       this.map.addLayer({
         id: 'pin-radius-outline',
         type: 'line',
-        source: 'pin-radius',
+        source: MapSource.markerHalo,
         paint: {
           'line-color': '#0084db',
           'line-width': 3,
@@ -236,11 +277,14 @@ export class MapPage implements OnInit {
         },
         properties: {
           title: playground.name,
+          id: playground.id,
         },
       }
     })
-    const source = isPrivate ? 'private-playgrounds' : 'playgrounds'
-    const icon = isPrivate ? 'private-playground-icon' : 'playground-icon'
+    const source = isPrivate
+      ? MapSource.privatePlaygrounds
+      : MapSource.playgrounds
+    const icon = isPrivate ? MapIcon.privatePlaygrounds : MapIcon.playgrounds
     const playgroundsData = {
       type: 'FeatureCollection',
       features: playgroundFeatures,
@@ -288,6 +332,32 @@ export class MapPage implements OnInit {
 
   didToggleSearch() {
     this.isSearchActive = !this.isSearchActive
+  }
+
+  async didClickCurrentLocation() {
+    const location = await this.locationService.getCurrentLocation()
+    this.markerLngLat = [location.coords.longitude, location.coords.latitude]
+    this.runGeocoding()
+    this.addPinRadiusToMap()
+    this.hasUpdatedSearchParams = true
+  }
+
+  private async openPlaygroundDetails(id: number) {
+    const playground = this.currentPlaygroundResult.playgrounds.find(
+      (p) => p.id === id
+    )
+    if (playground) {
+      const modal = await this.modalController.create({
+        component: PlaygroundDetailComponent,
+        breakpoints: [0, 0.5],
+        initialBreakpoint: 0.5,
+        swipeToClose: true,
+        componentProps: {
+          playground,
+        },
+      })
+      await modal.present()
+    }
   }
 
   private async showRequestFailedToast(repeatHandler: () => void) {

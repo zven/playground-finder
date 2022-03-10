@@ -45,6 +45,32 @@ export class SettingsPage {
     return LocationOptionType.dataType(type)
   }
 
+  getRange(type: LocationOptionType): [number, number] {
+    return LocationOptionType.range(type)
+  }
+
+  getValueLabel(option: LocationOption): string {
+    if (typeof option.value !== 'number') {
+      return ''
+    }
+    switch (option.type) {
+      case LocationOptionType.accuracy:
+        if (option.value < 1000) {
+          return `${option.value.toFixed(0)}m`
+        }
+        return `${(option.value / 1000).toFixed(1)}km`
+      case LocationOptionType.interval:
+        if (option.value < 60) {
+          return `${option.value.toFixed(0)}s`
+        } else if (option.value >= 60 && option.value < 360) {
+          return `${(option.value / 60).toFixed(1)}min`
+        }
+        return `${(option.value / 60 / 60).toFixed(1)}h`
+      default:
+        return ''
+    }
+  }
+
   async showDetails(type: LocationOptionType) {
     const modal = await this.modalController.create({
       component: SettingsDetailComponent,
@@ -59,5 +85,9 @@ export class SettingsPage {
       },
     })
     modal.present()
+  }
+
+  onOptionChange() {
+    this.locationManagementService.locationOptions.next(this.locationOptions)
   }
 }

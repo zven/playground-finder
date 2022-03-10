@@ -30,12 +30,10 @@ export class LocationManagementService {
       {
         type: LocationOptionType.accuracy,
         value: 0,
-        range: [0, 10000],
       },
       {
         type: LocationOptionType.interval,
         value: 0,
-        range: [0, 86400],
       },
     ]
   }
@@ -46,6 +44,7 @@ export class LocationManagementService {
         key: LocationManagementService.LOCATION_OPTIONS_STORAGE_KEY,
         value: JSON.stringify(newOptions),
       })
+      console.log(JSON.stringify(newOptions))
     })
     this.initLocationOptions()
   }
@@ -64,5 +63,14 @@ export class LocationManagementService {
       } catch (error) {}
     }
     this.locationOptions.next(this.defaultOptions)
+  }
+
+  async loadLocationOption(type: LocationOptionType): Promise<LocationOption> {
+    if (!this.locationOptions) {
+      await this.initLocationOptions()
+    }
+    return this.locationOptions.getValue().find((o) => {
+      o.type === type
+    })
   }
 }
