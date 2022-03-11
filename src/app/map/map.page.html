@@ -17,12 +17,12 @@
       <ion-icon
         name="locate-outline"
         color="primary"
-        (click)="didClickCurrentLocation()"
+        (click)="onCurrentLocationClick()"
       ></ion-icon>
       <ion-icon
         slot="end"
         name="close-outline"
-        (click)="didToggleSearch()"
+        (click)="onSearchToggle()"
       ></ion-icon>
     </ion-item>
 
@@ -34,7 +34,7 @@
         step="10"
         ticks="false"
         [(ngModel)]="searchRange"
-        (ionChange)="didChangeSearchRange()"
+        (ionChange)="onSearchRangeChange()"
       ></ion-range>
       <ion-chip outline="true" item-end>
         <ion-label> {{ formattedSearchRange() }} </ion-label>
@@ -47,7 +47,7 @@
       id="search-button"
       *ngIf="hasUpdatedSearchParams && !isLoadingPlaygrounds"
       expand="block"
-      (click)="didTapSearchPlaygrounds()"
+      (click)="onSearchPlaygroundsClick()"
     >
       Look for playgrounds in this area
     </ion-button>
@@ -64,7 +64,7 @@
     slot="fixed"
     *ngIf="!isSearchActive && !isLoadingPlaygrounds"
   >
-    <ion-fab-button (click)="didToggleSearch()">
+    <ion-fab-button (click)="onSearchToggle()">
       <ion-icon name="search-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>

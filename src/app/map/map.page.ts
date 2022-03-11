@@ -109,14 +109,13 @@ export class MapPage implements OnInit {
         'click',
         [MapSource.playgrounds, MapSource.privatePlaygrounds],
         async (e) => {
-          e.originalEvent.preventDefault()
           this.map.flyTo({
             center: e.features[0].geometry.coordinates,
             zoom: 17,
-            speed: 0.5,
+            speed: 0.75,
             padding: {
               top: 0,
-              bottom: 200,
+              bottom: window.innerHeight / 2,
               left: 0,
               right: 0,
             },
@@ -160,6 +159,12 @@ export class MapPage implements OnInit {
         this.hasUpdatedSearchParams = true
       })
       this.map.on('click', async (e) => {
+        let f = this.map.queryRenderedFeatures(e.point, {
+          layers: [MapSource.playgrounds, MapSource.privatePlaygrounds],
+        })
+        if (f.length) {
+          return
+        }
         this.markerLngLat = [e.lngLat.lng, e.lngLat.lat]
         marker.setLngLat(this.markerLngLat)
         this.runGeocoding()
@@ -317,31 +322,6 @@ export class MapPage implements OnInit {
     }
   }
 
-  async didTapSearchPlaygrounds() {
-    await this.loadPlaygrounds()
-  }
-
-  didChangeSearchRange() {
-    if (this.isInitialLoading) {
-      this.isInitialLoading = false
-      return
-    }
-    this.hasUpdatedSearchParams = true
-    this.addPinRadiusToMap()
-  }
-
-  didToggleSearch() {
-    this.isSearchActive = !this.isSearchActive
-  }
-
-  async didClickCurrentLocation() {
-    const location = await this.locationService.getCurrentLocation()
-    this.markerLngLat = [location.coords.longitude, location.coords.latitude]
-    this.runGeocoding()
-    this.addPinRadiusToMap()
-    this.hasUpdatedSearchParams = true
-  }
-
   private async openPlaygroundDetails(id: number) {
     const playground = this.currentPlaygroundResult.playgrounds.find(
       (p) => p.id === id
@@ -351,7 +331,9 @@ export class MapPage implements OnInit {
         component: PlaygroundDetailComponent,
         breakpoints: [0, 0.5],
         initialBreakpoint: 0.5,
+        backdropBreakpoint: 0.5,
         swipeToClose: true,
+        backdropDismiss: false,
         componentProps: {
           playground,
         },
@@ -399,5 +381,32 @@ export class MapPage implements OnInit {
         }
       )
     }
+  }
+
+  // Click listeners
+
+  async onSearchPlaygroundsClick() {
+    await this.loadPlaygrounds()
+  }
+
+  onSearchRangeChange() {
+    if (this.isInitialLoading) {
+      this.isInitialLoading = false
+      return
+    }
+    this.hasUpdatedSearchParams = true
+    this.addPinRadiusToMap()
+  }
+
+  onSearchToggle() {
+    this.isSearchActive = !this.isSearchActive
+  }
+
+  async onCurrentLocationClick() {
+    const location = await this.locationService.getCurrentLocation()
+    this.markerLngLat = [location.coords.longitude, location.coords.latitude]
+    this.runGeocoding()
+    this.addPinRadiusToMap()
+    this.hasUpdatedSearchParams = true
   }
 }

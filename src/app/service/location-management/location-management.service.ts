@@ -44,7 +44,6 @@ export class LocationManagementService {
         key: LocationManagementService.LOCATION_OPTIONS_STORAGE_KEY,
         value: JSON.stringify(newOptions),
       })
-      console.log(JSON.stringify(newOptions))
     })
     this.initLocationOptions()
   }

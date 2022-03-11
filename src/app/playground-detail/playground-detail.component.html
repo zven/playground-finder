@@ -1,26 +1,49 @@
 <ion-content fullscreen>
-  <ion-avatar>
+  <ion-avatar *ngIf="false">
     <img *ngIf="playground.isPrivate" src="assets/balloon-lock.png" />
     <img *ngIf="!playground.isPrivate" src="assets/balloon.png" />
   </ion-avatar>
   <ion-card-header>
-    <ion-card-title>{{ playground.name }}</ion-card-title>
-    <ion-card-subtitle>{{ playground.address }}</ion-card-subtitle>
+    <ion-card-title>{{ playground.name }} </ion-card-title>
+    <div class="title-buttons">
+      <ion-button (click)="onNavigateClick()">
+        <ion-icon name="navigate-outline" size="small"></ion-icon>
+      </ion-button>
+      <ion-button (click)="onBookmarkClick()">
+        <ion-icon name="bookmark-outline" size="small"></ion-icon>
+      </ion-button>
+      <ion-button (click)="onShareClick()">
+        <ion-icon name="share-outline" size="small"></ion-icon>
+      </ion-button>
+    </div>
   </ion-card-header>
   <ion-card-content>
     <ion-list>
+      <ion-item *ngIf="playground.address">
+        <ion-thumbnail slot="end">
+          <ion-icon name="book"></ion-icon>
+        </ion-thumbnail>
+        <ion-label>
+          <h4>Address</h4>
+          <h3>{{ playground.address }}</h3>
+        </ion-label>
+      </ion-item>
+      <ion-item *ngIf="!playground.address">
+        <ion-thumbnail slot="end">
+          <ion-icon name="book"></ion-icon>
+        </ion-thumbnail>
+        <ion-label>
+          <h4>Address</h4>
+          <h3>
+            {{ playground.lat.toFixed(3) }} / {{ playground.lon.toFixed(3) }}
+          </h3>
+        </ion-label>
+        <ion-spinner *ngIf="isLoadingAddress" name="lines-small"></ion-spinner>
+      </ion-item>
       <ion-item>
         <ion-thumbnail slot="end">
-          <ion-icon
-            *ngIf="playground.isPrivate"
-            name="lock-closed"
-            class="private"
-          ></ion-icon>
-          <ion-icon
-            *ngIf="!playground.isPrivate"
-            name="lock-open"
-            class="public"
-          ></ion-icon>
+          <ion-icon *ngIf="playground.isPrivate" name="lock-closed"></ion-icon>
+          <ion-icon *ngIf="!playground.isPrivate" name="lock-open"></ion-icon>
         </ion-thumbnail>
         <ion-label>
           <h4>Access</h4>
@@ -30,5 +53,5 @@
       </ion-item>
     </ion-list>
   </ion-card-content>
-  <ion-icon id="close-icon" name="close" (click)="onCloseClick()"></ion-icon>
+  <ion-icon class="close-icon" name="close" (click)="onCloseClick()"></ion-icon>
 </ion-content>
