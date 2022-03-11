@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core'
 import { ModalController } from '@ionic/angular'
-import { Playground } from '../service/playground-service/playground.service'
+import { Playground } from '../service/playground-service/playground'
 import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-geocoding.service'
 
 @Component({

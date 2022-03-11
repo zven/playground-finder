@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Playground Finder</string>
+	<string>Playground Finder</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -50,5 +50,13 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationUsageDescription</key>
+	<string>Your location is used to find playgrounds, their addresses and for navigation.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Your location is used to find playgrounds, their addresses and for navigation.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Your location is used to find playgrounds, their addresses and for navigation.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your location is used to find playgrounds, their addresses and for navigation.</string>
 </dict>
 </plist>

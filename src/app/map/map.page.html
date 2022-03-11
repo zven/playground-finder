@@ -16,7 +16,7 @@
       </ion-label>
       <ion-icon
         name="locate-outline"
-        color="primary"
+        [color]="usesCurrentLocation ? 'primary' : 'dark'"
         (click)="onCurrentLocationClick()"
       ></ion-icon>
       <ion-icon

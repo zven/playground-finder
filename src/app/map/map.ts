@@ -1,6 +1,7 @@
 export enum MapSource {
   playgrounds = 'playgrounds-source',
   privatePlaygrounds = 'private-playgrounds-source',
+  playgroundsBounds = 'playgrounds-bounds',
   markerHalo = 'marker-halo-source',
 }
 

@@ -38,6 +38,7 @@ export class LocationService {
       )
     ).value
     if (
+      position.coords &&
       position.coords.accuracy &&
       position.coords.accuracy > locationAccuracy
     ) {
@@ -79,13 +80,23 @@ export class LocationService {
     return position
   }
 
+  private async checkForPermissions() {
+    try {
+      await Geolocation.requestPermissions()
+    } catch (e) {}
+  }
+
   async getCurrentLocation(): Promise<Position> {
-    if (this.shouldUseCachedPosition) {
+    await this.checkForPermissions()
+    if (this.shouldUseCachedPosition()) {
       // return cached position if eligible
       return this.filterPositionWithAccuracy(this.cachedPosition)
     }
     const position = await Geolocation.getCurrentPosition()
-    this.cachedPosition = await this.filterPositionWithAccuracy(position)
-    return position
+    if (position) {
+      this.cachedPosition = await this.filterPositionWithAccuracy(position)
+      return this.cachedPosition
+    }
+    return undefined
   }
 }

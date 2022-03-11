@@ -1,11 +1,11 @@
 import { AfterViewInit, Component } from '@angular/core'
 import { Router } from '@angular/router'
 import { distance } from '@turf/turf'
+import { PlaygroundService } from '../service/playground-service/playground.service'
 import {
   Playground,
   PlaygroundResult,
-  PlaygroundService,
-} from '../service/playground-service/playground.service'
+} from '../service/playground-service/playground'
 import { Tab } from '../tabs/tabs-routing.module'
 
 @Component({

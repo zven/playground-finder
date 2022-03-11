@@ -68,8 +68,8 @@ export class LocationManagementService {
     if (!this.locationOptions) {
       await this.initLocationOptions()
     }
-    return this.locationOptions.getValue().find((o) => {
-      o.type === type
-    })
+    return this.locationOptions
+      .getValue()
+      .find((o) => (o.type as LocationOptionType) === type)
   }
 }

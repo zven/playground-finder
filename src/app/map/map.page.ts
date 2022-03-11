@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core'
 import { ModalController, ToastButton, ToastController } from '@ionic/angular'
+import { PlaygroundService } from '../service/playground-service/playground.service'
 import {
   Playground,
   PlaygroundResult,
-  PlaygroundService,
-} from '../service/playground-service/playground.service'
+} from '../service/playground-service/playground'
 
 import * as MapboxGl from 'mapbox-gl'
 import * as Turf from '@turf/turf'
@@ -31,6 +31,7 @@ export class MapPage implements OnInit {
   isLoadingMarkerAddress: boolean = false
   isSearchActive: boolean = false
   hasUpdatedSearchParams: boolean = false
+  usesCurrentLocation: boolean = false
   searchRange: number = 2000
   markerLngLat: [number, number]
   markerAddress: string
@@ -96,7 +97,7 @@ export class MapPage implements OnInit {
       const cachedResult = this.playgroundService.loadCachedPlaygroundResult()
       if (cachedResult) {
         this.markerLngLat = [cachedResult.lon, cachedResult.lat]
-        this.searchRange = cachedResult.searchRange
+        this.searchRange = cachedResult.radiusMeters
         this.addPlaygroundResultToMap(cachedResult)
         this.addPinRadiusToMap()
         this.runGeocoding()
@@ -157,6 +158,7 @@ export class MapPage implements OnInit {
         this.runGeocoding()
         this.addPinRadiusToMap()
         this.hasUpdatedSearchParams = true
+        this.usesCurrentLocation = false
       })
       this.map.on('click', async (e) => {
         let f = this.map.queryRenderedFeatures(e.point, {
@@ -170,6 +172,7 @@ export class MapPage implements OnInit {
         this.runGeocoding()
         this.addPinRadiusToMap()
         this.hasUpdatedSearchParams = true
+        this.usesCurrentLocation = false
       })
     })
   }
@@ -222,9 +225,9 @@ export class MapPage implements OnInit {
       result.playgrounds.filter((p) => !p.isPrivate),
       false
     )
-    this.map.fitBounds(result.boundingBox, {
+    /*this.map.fitBounds(result.boundingBox, {
       padding: this.mapPadding,
-    })
+    })*/
   }
 
   private addPinRadiusToMap() {
@@ -408,5 +411,6 @@ export class MapPage implements OnInit {
     this.runGeocoding()
     this.addPinRadiusToMap()
     this.hasUpdatedSearchParams = true
+    this.usesCurrentLocation = true
   }
 }
