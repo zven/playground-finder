@@ -54,9 +54,9 @@ export class MapPage implements OnInit {
 
   mapPadding(): { left: number; right: number; top: number; bottom: number } {
     return {
-      left: 50,
-      right: 50,
-      top: this.isSearchActive ? 250 : 100,
+      left: 100,
+      right: 100,
+      top: this.isSearchActive ? 300 : 150,
       bottom: 100,
     }
   }
@@ -217,6 +217,7 @@ export class MapPage implements OnInit {
 
   private addPlaygroundResultToMap(result: PlaygroundResult) {
     this.currentPlaygroundResult = result
+    this.addPlaygroundsBoundsToMap(result.playgrounds, true)
     this.addPlaygroundsToMap(
       result.playgrounds.filter((p) => p.isPrivate),
       true
@@ -225,9 +226,6 @@ export class MapPage implements OnInit {
       result.playgrounds.filter((p) => !p.isPrivate),
       false
     )
-    /*this.map.fitBounds(result.boundingBox, {
-      padding: this.mapPadding,
-    })*/
   }
 
   private addPinRadiusToMap() {
@@ -263,7 +261,7 @@ export class MapPage implements OnInit {
         },
       })
       this.map.addLayer({
-        id: 'pin-radius-outline',
+        id: MapSource.markerHalo + '-outline',
         type: 'line',
         source: MapSource.markerHalo,
         paint: {
@@ -289,7 +287,7 @@ export class MapPage implements OnInit {
         },
       }
     })
-    const source = isPrivate
+    const playgroundSource = isPrivate
       ? MapSource.privatePlaygrounds
       : MapSource.playgrounds
     const icon = isPrivate ? MapIcon.privatePlaygrounds : MapIcon.playgrounds
@@ -297,20 +295,20 @@ export class MapPage implements OnInit {
       type: 'FeatureCollection',
       features: playgroundFeatures,
     }
-    const playgroundsSource = this.map.getSource(source)
+    const playgroundsSource = this.map.getSource(playgroundSource)
     if (playgroundsSource) {
       playgroundsSource.setData(playgroundsData)
     } else {
-      this.map.addSource(source, {
+      this.map.addSource(playgroundSource, {
         type: 'geojson',
         data: playgroundsData,
       })
     }
-    if (!this.map.getLayer(source)) {
+    if (!this.map.getLayer(playgroundSource)) {
       this.map.addLayer({
-        id: source,
+        id: playgroundSource,
         type: 'symbol',
-        source: source,
+        source: playgroundSource,
         layout: {
           'icon-image': icon,
           'icon-anchor': 'bottom',
@@ -323,6 +321,70 @@ export class MapPage implements OnInit {
         },
       })
     }
+  }
+
+  private addPlaygroundsBoundsToMap(
+    playgrounds: Playground[],
+    fitBounds: boolean
+  ) {
+    const playgroundBoundsFeatures = playgrounds.map((playground) => {
+      if (playground.nodes) {
+        let nodes = playground.nodes
+        nodes.push(nodes[0])
+        return {
+          type: 'Feature',
+          geometry: {
+            type: 'Polygon',
+            coordinates: [nodes],
+          },
+        }
+      }
+    })
+    const playgroundsBoundsData = {
+      type: 'FeatureCollection',
+      features: playgroundBoundsFeatures,
+    }
+    const playgroundsBoundsSource = this.map.getSource(
+      MapSource.playgroundsBounds
+    )
+    if (playgroundsBoundsSource) {
+      playgroundsBoundsSource.setData(playgroundsBoundsData)
+    } else {
+      this.map.addSource(MapSource.playgroundsBounds, {
+        type: 'geojson',
+        data: playgroundsBoundsData,
+      })
+    }
+    if (!this.map.getLayer(MapSource.playgroundsBounds)) {
+      this.map.addLayer({
+        id: MapSource.playgroundsBounds,
+        type: 'fill',
+        source: MapSource.playgroundsBounds,
+        paint: {
+          'fill-color': '#FFBB01',
+          'fill-opacity': 0.05,
+        },
+      })
+      this.map.addLayer({
+        id: MapSource.playgroundsBounds + '-outline',
+        type: 'line',
+        source: MapSource.playgroundsBounds,
+        paint: {
+          'line-color': '#FFBB01',
+          'line-width': 3,
+        },
+      })
+    }
+    const coordinates = playgroundBoundsFeatures[0].geometry.coordinates
+    const bounds = new MapboxGl.LngLatBounds(coordinates[0], coordinates[1])
+    playgroundBoundsFeatures.forEach((f) => {
+      f.geometry.coordinates.forEach((c) => {
+        bounds.extend(c)
+      })
+    })
+    this.map.fitBounds(bounds, {
+      padding: this.mapPadding,
+    })
   }
 
   private async openPlaygroundDetails(id: number) {

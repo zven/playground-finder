@@ -81,14 +81,17 @@ export class PlaygroundService {
         p.lon = playground.center.lon
         p.name = playground.tags.name || 'Playground'
         p.isPrivate = playground.tags.access === 'private'
-        p.nodes = nodes
-          .filter((n) => playground.nodes.includes(n.id))
-          .map((n) => {
-            const node = n as PlaygroundResponseNode
-            if (node) {
-              return [node.lat, node.lon]
-            }
-          })
+        let pNodes = []
+        playground.nodes.map((pNode) => {
+          const node = nodes.find(
+            (node) => node.id === pNode
+          ) as PlaygroundResponseNode
+          if (node) {
+            pNodes.push([node.lon, node.lat])
+          }
+        })
+        p.nodes = pNodes
+
         return p
       }
     })
