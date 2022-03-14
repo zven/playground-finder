@@ -43,14 +43,6 @@
     <p id="hint" *ngIf="!hasUpdatedSearchParams">
       Move the marker on the map and find nearby playgrounds…
     </p>
-    <ion-button
-      id="search-button"
-      *ngIf="hasUpdatedSearchParams && !isLoadingPlaygrounds"
-      expand="block"
-      (click)="onSearchPlaygroundsClick()"
-    >
-      Look for playgrounds in this area
-    </ion-button>
   </div>
   <div id="loading" *ngIf="isLoadingPlaygrounds" class="padding-safe-area-top">
     <h4>
@@ -68,4 +60,12 @@
       <ion-icon name="search-outline"></ion-icon>
     </ion-fab-button>
   </ion-fab>
+
+  <ion-button
+    id="search-button"
+    *ngIf="hasUpdatedSearchParams && !isLoadingPlaygrounds"
+    (click)="onSearchPlaygroundsClick()"
+  >
+    Look for playgrounds in this area
+  </ion-button>
 </ion-content>

@@ -58,10 +58,13 @@ ion-fab {
 }
 
 #search-button {
-  margin-left: 3em;
-  margin-right: 3em;
-  margin-top: 1em;
-  margin-bottom: 1em;
+  position: absolute;
+  left: 50%;
+  bottom: 5em;
+  transform: translate(-50%, 0);
+  --border-radius: 30px;
+  --padding-start: 2em;
+  --padding-end: 2em;
 }
 
 #hint {
