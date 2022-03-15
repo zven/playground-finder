@@ -6,6 +6,8 @@
 
 ---
 
+A simple crossplatform app to find playgrounds in your area as well as a sandbox to develop and test architectures and UI/UX designs that enable users to give informed consent and souvereignly manage their personal location information.
+
 This is part of the [SIMPORT][simport] project.
 
 ```
