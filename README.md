@@ -7,6 +7,7 @@
 ---
 
 A simple crossplatform app to find playgrounds in your area as well as a sandbox to develop and test architectures and UI/UX designs that enable users to give informed consent and souvereignly manage their personal location information.
+Implemented using [Ionic][ionic], [Capacitator][capacitor] and [Angular][angular].
 
 This is part of the [SIMPORT][simport] project.
 
@@ -19,6 +20,5 @@ Copyright (c) 2022
 
 [simport]: https://simport.net/
 [ionic]: https://ionicframework.com/
-[ionic-cli]: https://ionicframework.com/docs/cli
 [capacitor]: https://capacitorjs.com/
 [angular]: https://angular.io/
