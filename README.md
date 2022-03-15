@@ -10,7 +10,7 @@ This is part of the [SIMPORT][simport] project.
 
 ```
 Playground Finder
-Copyright (c) 2022 SIMPORT
+Copyright (c) 2022 
 ```
 
 [Further information](LICENSE)
