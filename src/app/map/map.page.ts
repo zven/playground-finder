@@ -116,7 +116,7 @@ export class MapPage implements OnInit {
             speed: 0.75,
             padding: {
               top: 0,
-              bottom: window.innerHeight / 2,
+              bottom: window.innerHeight / 2 - 100,
               left: 0,
               right: 0,
             },
@@ -398,13 +398,23 @@ export class MapPage implements OnInit {
         initialBreakpoint: 0.5,
         backdropBreakpoint: 0.5,
         swipeToClose: true,
-        backdropDismiss: false,
+        backdropDismiss: true,
+
         componentProps: {
           playground,
         },
       })
+      modal.onDidDismiss().then(() => {
+        this.map.flyTo({
+          center: [playground.lon, playground.lat],
+          zoom: 17,
+          speed: 0.75,
+          padding: this.mapPadding,
+        })
+      })
       await modal.present()
     }
+    this.isSearchActive = false
   }
 
   private async showRequestFailedToast(repeatHandler: () => void) {

@@ -60,11 +60,12 @@ ion-fab {
 #search-button {
   position: absolute;
   left: 50%;
-  bottom: 5em;
+  bottom: 7em;
   transform: translate(-50%, 0);
   --border-radius: 30px;
   --padding-start: 2em;
   --padding-end: 2em;
+  --box-shadow: 0px 1px 8px rgba(0, 0, 0, 0.2);
 }
 
 #hint {

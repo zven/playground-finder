@@ -58,10 +58,10 @@ export namespace LocationOptionType {
   export function range(type: LocationOptionType): [number, number] {
     switch (type) {
       case LocationOptionType.accuracy:
-        return [0, 10000]
+        return [0, 1000]
 
       case LocationOptionType.interval:
-        return [0, 86400]
+        return [0, 3600]
       case LocationOptionType.playgrounds:
       case LocationOptionType.navigation:
       case LocationOptionType.addresses:

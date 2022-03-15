@@ -55,17 +55,27 @@ export class SettingsPage {
     }
     switch (option.type) {
       case LocationOptionType.accuracy:
-        if (option.value < 1000) {
+        if (option.value <= 0) {
+          return 'Unlimited'
+        } else if (option.value < 1000) {
           return `${option.value.toFixed(0)}m`
         }
-        return `${(option.value / 1000).toFixed(1)}km`
+        return `${(option.value / 1000).toFixed(0)}km`
       case LocationOptionType.interval:
-        if (option.value < 60) {
+        if (option.value <= 0) {
+          return 'Unlimited'
+        } else if (option.value < 60) {
           return `${option.value.toFixed(0)}s`
-        } else if (option.value >= 60 && option.value < 360) {
-          return `${(option.value / 60).toFixed(1)}min`
+        } else if (option.value >= 60 && option.value < 600) {
+          const mins = Math.floor(option.value / 60)
+          const secs = (option.value / 60 - mins) * 60
+          const secsString = `${secs.toFixed(0)}`
+          const leadingZeroForSecs = secsString.length < 2 ? '0' : ''
+          return `${mins}:${leadingZeroForSecs}${secsString}min`
+        } else if (option.value >= 600 && option.value < 3600) {
+          return `${Math.floor(option.value / 60)}min`
         }
-        return `${(option.value / 60 / 60).toFixed(1)}h`
+        return `${(option.value / 60 / 60).toFixed(0)}h`
       default:
         return ''
     }
