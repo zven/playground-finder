@@ -1,7 +1,13 @@
-ion-card-title {
-  padding-left: 1em;
-  padding-right: 1em;
+ion-modal,
+ion-modal ion-backdrop {
+  pointer-events: none !important;
 }
+
+ion-card-title {
+  padding-right: 2em;
+  font-size: large;
+}
+
 ion-avatar {
   width: auto;
   margin-top: 1em;
@@ -30,25 +36,23 @@ ion-avatar {
 .title-buttons {
   display: flex;
   justify-content: space-around;
-  width: auto;
-  padding: 0.4em;
-  margin: 1em 3em 0.25em 3em;
-  background-color: #fefefe;
-  border-radius: 48px;
-  box-shadow: 0px 1px 8px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  padding: 0.5em 0em 0em 0em;
+  margin-top: 1em;
   ion-button {
-    --border-radius: 100%;
-    --padding-start: 0;
-    --padding-end: 0;
-    width: 2em;
-    height: 2em;
+    width: 40%;
+    --border-radius: 32px;
+    color: #333333;
     ion-icon {
       color: #333333;
+      padding-right: 0.5em;
     }
   }
 }
 
 ion-item {
+  --padding-start: 0;
+  --padding-end: 0;
   h4 {
     color: #333333;
     font-weight: 300;

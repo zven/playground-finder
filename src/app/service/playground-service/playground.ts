@@ -2,10 +2,11 @@ export class Playground {
   id: number
   lat: number
   lon: number
-  name: string
-  address: string
+  name: String
   isPrivate: boolean
   nodes: [number, number][]
+  codedAddress?: string
+  codedLatLon?: [number, number]
 }
 
 export class PlaygroundResult {

@@ -22,7 +22,7 @@ export class LocationService {
         LocationOptionType.interval
       )
     ).value
-    if (this.cachedPosition) {
+    if (this.cachedPosition && this.cachedPosition.coords) {
       const timestamp = Date.now() / 1000
       return timestamp - this.cachedPosition.timestamp < locationInterval
     }
@@ -37,8 +37,9 @@ export class LocationService {
         LocationOptionType.accuracy
       )
     ).value
-    if (
-      position.coords &&
+    if (!position || !position.coords) {
+      return undefined
+    } else if (
       position.coords.accuracy &&
       position.coords.accuracy > locationAccuracy
     ) {
@@ -88,7 +89,7 @@ export class LocationService {
 
   async getCurrentLocation(): Promise<Position> {
     await this.checkForPermissions()
-    if (this.shouldUseCachedPosition()) {
+    if (await this.shouldUseCachedPosition()) {
       // return cached position if eligible
       return this.filterPositionWithAccuracy(this.cachedPosition)
     }

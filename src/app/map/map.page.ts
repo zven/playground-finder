@@ -12,6 +12,8 @@ import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-ge
 import { LocationService } from '../service/location/location.service'
 import { MapIcon, MapSource } from './map'
 import { PlaygroundDetailComponent } from '../playground-detail/playground-detail.component'
+import { Directions } from '../service/direction/direction'
+import { Constants } from '../utils/constants'
 
 @Component({
   selector: 'app-map',
@@ -19,7 +21,6 @@ import { PlaygroundDetailComponent } from '../playground-detail/playground-detai
   styleUrls: ['map.page.scss'],
 })
 export class MapPage implements OnInit {
-  private mapboxToken = 'API_KEY'
   private map: MapboxGl.Map
   static INITIAL_LON_LAT: [number, number] = [
     7.6277627964892165, 51.963484569674435,
@@ -70,7 +71,7 @@ export class MapPage implements OnInit {
     private modalController: ModalController,
     private toastController: ToastController
   ) {
-    MapboxGl.accessToken = this.mapboxToken
+    MapboxGl.accessToken = Constants.MAPBOX_TOKEN
   }
 
   ngOnInit() {
@@ -86,11 +87,11 @@ export class MapPage implements OnInit {
       window['map'] = this.map
 
       this.map.loadImage('assets/balloon.png', (error, image) => {
-        if (error) throw error
+        if (error) console.log(`loading image failed: ${error}`)
         this.map.addImage(MapIcon.playgrounds, image)
       })
       this.map.loadImage('assets/balloon-lock.png', (error, image) => {
-        if (error) throw error
+        if (error) console.log(`loading image failed: ${error}`)
         this.map.addImage(MapIcon.privatePlaygrounds, image)
       })
 
@@ -203,7 +204,7 @@ export class MapPage implements OnInit {
         this.hasUpdatedSearchParams = false
         if (success && result) {
           this.addPlaygroundResultToMap(result)
-          if (result.playgrounds.length === 0) {
+          if (!result.playgrounds.length) {
             await this.showNoPlaygroundsToast()
           }
         } else {
@@ -217,7 +218,7 @@ export class MapPage implements OnInit {
 
   private addPlaygroundResultToMap(result: PlaygroundResult) {
     this.currentPlaygroundResult = result
-    this.addPlaygroundsBoundsToMap(result.playgrounds, true)
+    this.addPlaygroundsBoundsToMap(result.playgrounds)
     this.addPlaygroundsToMap(
       result.playgrounds.filter((p) => p.isPrivate),
       true
@@ -243,18 +244,16 @@ export class MapPage implements OnInit {
     const radiusSource = this.map.getSource(MapSource.markerHalo)
     if (radiusSource) {
       radiusSource.setData(radiusData)
-    } else {
-      this.map.addSource(MapSource.markerHalo, {
-        type: 'geojson',
-        data: radiusData,
-      })
     }
 
     if (!this.map.getLayer(MapSource.markerHalo)) {
       this.map.addLayer({
         id: MapSource.markerHalo,
         type: 'fill',
-        source: MapSource.markerHalo,
+        source: {
+          type: 'geojson',
+          data: radiusData,
+        },
         paint: {
           'fill-color': '#0084db',
           'fill-opacity': 0.1,
@@ -298,17 +297,15 @@ export class MapPage implements OnInit {
     const playgroundsSource = this.map.getSource(playgroundSource)
     if (playgroundsSource) {
       playgroundsSource.setData(playgroundsData)
-    } else {
-      this.map.addSource(playgroundSource, {
-        type: 'geojson',
-        data: playgroundsData,
-      })
     }
     if (!this.map.getLayer(playgroundSource)) {
       this.map.addLayer({
         id: playgroundSource,
         type: 'symbol',
-        source: playgroundSource,
+        source: {
+          type: 'geojson',
+          data: playgroundsData,
+        },
         layout: {
           'icon-image': icon,
           'icon-anchor': 'bottom',
@@ -323,10 +320,7 @@ export class MapPage implements OnInit {
     }
   }
 
-  private addPlaygroundsBoundsToMap(
-    playgrounds: Playground[],
-    fitBounds: boolean
-  ) {
+  private addPlaygroundsBoundsToMap(playgrounds: Playground[]) {
     const playgroundBoundsFeatures = playgrounds.map((playground) => {
       if (playground.nodes) {
         let nodes = playground.nodes
@@ -349,17 +343,15 @@ export class MapPage implements OnInit {
     )
     if (playgroundsBoundsSource) {
       playgroundsBoundsSource.setData(playgroundsBoundsData)
-    } else {
-      this.map.addSource(MapSource.playgroundsBounds, {
-        type: 'geojson',
-        data: playgroundsBoundsData,
-      })
     }
     if (!this.map.getLayer(MapSource.playgroundsBounds)) {
       this.map.addLayer({
         id: MapSource.playgroundsBounds,
         type: 'fill',
-        source: MapSource.playgroundsBounds,
+        source: {
+          type: 'geojson',
+          data: playgroundsBoundsData,
+        },
         paint: {
           'fill-color': '#FFBB01',
           'fill-opacity': 0.05,
@@ -375,15 +367,51 @@ export class MapPage implements OnInit {
         },
       })
     }
-    const coordinates = playgroundBoundsFeatures[0].geometry.coordinates
-    const bounds = new MapboxGl.LngLatBounds(coordinates[0], coordinates[1])
-    playgroundBoundsFeatures.forEach((f) => {
-      f.geometry.coordinates.forEach((c) => {
-        bounds.extend(c)
+    try {
+      const coordinates = playgroundBoundsFeatures.find((f) => {
+        return f.geometry.coordinates.length >= 2
+      }).geometry.coordinates
+      const bounds = new MapboxGl.LngLatBounds(coordinates[0], coordinates[1])
+      playgroundBoundsFeatures.forEach((f) => {
+        f.geometry.coordinates.forEach((c) => {
+          bounds.extend(c)
+        })
       })
-    })
-    this.map.fitBounds(bounds, {
-      padding: this.mapPadding,
+      this.map.fitBounds(bounds, {
+        padding: this.mapPadding,
+      })
+    } catch (e) {}
+  }
+
+  private async addRouteToMap(route: string) {
+    const geojson = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates: route,
+      },
+    }
+    const routeSource = this.map.getSource(MapSource.route)
+    if (routeSource) {
+      routeSource.setData(geojson)
+    }
+    this.map.addLayer({
+      id: MapSource.route,
+      type: 'line',
+      source: {
+        type: 'geojson',
+        data: geojson,
+      },
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
+      paint: {
+        'line-color': '#3887be',
+        'line-width': 5,
+        'line-opacity': 0.75,
+      },
     })
   }
 
@@ -399,18 +427,21 @@ export class MapPage implements OnInit {
         backdropBreakpoint: 0.5,
         swipeToClose: true,
         backdropDismiss: true,
-
         componentProps: {
           playground,
         },
       })
-      modal.onDidDismiss().then(() => {
-        this.map.flyTo({
-          center: [playground.lon, playground.lat],
-          zoom: 17,
-          speed: 0.75,
-          padding: this.mapPadding,
-        })
+      modal.onDidDismiss().then(async (data) => {
+        const directions: Directions = data.data
+        if (directions && directions.routes && directions.routes.length) {
+          const route = directions.routes[0].geometry.coordinates
+          await this.addRouteToMap(route)
+        } else {
+          this.map.flyTo({
+            center: [playground.lon, playground.lat],
+            padding: this.mapPadding,
+          })
+        }
       })
       await modal.present()
     }
