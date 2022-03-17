@@ -18,20 +18,22 @@ export class ReverseGeocodingService {
     latLng: [number, number],
     callback: (success: boolean, geocoding: ReverseGeocoding) => void
   ): Promise<any> {
-    const request = this.createReverseGeocodingRequestUrl(...latLng)
-    const headers = new HttpHeaders()
-      .set('content-type', 'application/json')
-      .set('Access-Control-Allow-Origin', '*')
-    this.http.get(request, { headers }).subscribe(
-      async (response) => {
-        const geocoding = ReverseGeocoding.fromApiObject(response, latLng)
-        callback(true, geocoding)
-      },
-      (error) => {
-        console.error(`reverse-geocoding failed: ${JSON.stringify(error)}`)
-        callback(false, undefined)
-      }
-    )
+    if (latLng && latLng.length && latLng[0] && latLng[1]) {
+      const request = this.createReverseGeocodingRequestUrl(...latLng)
+      const headers = new HttpHeaders()
+        .set('content-type', 'application/json')
+        .set('Access-Control-Allow-Origin', '*')
+      this.http.get(request, { headers }).subscribe(
+        async (response) => {
+          const geocoding = ReverseGeocoding.fromApiObject(response, latLng)
+          callback(true, geocoding)
+        },
+        (error) => {
+          console.error(`reverse-geocoding failed: ${JSON.stringify(error)}`)
+          callback(false, undefined)
+        }
+      )
+    }
   }
 
   private createReverseGeocodingRequestUrl(lat: number, lon: number): string {

@@ -1,5 +1,5 @@
 <ion-content [fullscreen]="true">
-  <div id="mapbox"></div>
+  <app-map-view id="map" [searchRadius]="searchRadius"></app-map-view>
   <div
     id="search"
     *ngIf="isSearchActive && !isLoadingPlaygrounds"
@@ -33,11 +33,11 @@
         max="10000"
         step="10"
         ticks="false"
-        [(ngModel)]="searchRange"
-        (ionChange)="onSearchRangeChange()"
+        [(ngModel)]="searchRadius"
+        (ionChange)="onSearchRadiusChange()"
       ></ion-range>
       <ion-chip outline="true" item-end>
-        <ion-label> {{ formattedSearchRange() }} </ion-label>
+        <ion-label> {{ formattedSearchRadius() }} </ion-label>
       </ion-chip>
     </ion-item>
     <p id="hint" *ngIf="!hasUpdatedSearchParams">
