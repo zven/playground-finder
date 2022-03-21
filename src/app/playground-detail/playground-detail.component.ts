@@ -50,8 +50,6 @@ export class PlaygroundDetailComponent implements OnInit {
 
   async onNavigateClick() {
     const location = await this.getCurrentLocationLngLat()
-    console.log(this.markerLngLat)
-    console.log(location)
     if (location && location.length === 2) {
       const playgroundLonLat: [number, number] = this.playground.codedLatLon
         ? [this.playground.codedLatLon[1], this.playground.codedLatLon[0]]

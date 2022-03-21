@@ -1,11 +1,17 @@
 import { AfterViewInit, Component, ViewChild } from '@angular/core'
-import { ToastButton, ToastController } from '@ionic/angular'
+import { ModalController, ToastButton, ToastController } from '@ionic/angular'
 import { PlaygroundService } from '../service/playground-service/playground.service'
-import { PlaygroundResult } from '../service/playground-service/playground'
+import {
+  Playground,
+  PlaygroundResult,
+} from '../service/playground-service/playground'
 
 import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-geocoding.service'
 import { LocationService } from '../service/location/location.service'
 import { MapViewComponent } from './map-view/map-view/map-view.component'
+import { PlaygroundDetailComponent } from '../playground-detail/playground-detail.component'
+import { DirectionRoute, Directions } from '../service/direction/direction'
+import { MapMode } from './map-view/map-view/map'
 
 @Component({
   selector: 'app-map',
@@ -28,11 +34,58 @@ export class MapPage implements AfterViewInit {
     return `${(this.searchRadius / 1000).toFixed(1)} km`
   }
 
+  get showDirections(): boolean {
+    return this.currentRouteDirection && !this.showLoadingPlaygrounds
+  }
+
+  get showSearch(): boolean {
+    return (
+      this.isSearchActive &&
+      !this.showDirections &&
+      !this.showLoadingPlaygrounds
+    )
+  }
+
+  get showLoadingPlaygrounds(): boolean {
+    return this.isLoadingPlaygrounds
+  }
+
+  get showSearchModalButton(): boolean {
+    return (
+      !this.showSearch && !this.showDirections && !this.showLoadingPlaygrounds
+    )
+  }
+
+  get showSearchPlaygroundsButton(): boolean {
+    return (
+      this.hasUpdatedSearchParams &&
+      !this.showLoadingPlaygrounds &&
+      !this.showDirections
+    )
+  }
+
   get markerLngLat(): [number, number] {
     return this.mapView.markerLngLat.value
   }
   set markerLngLat(lngLat) {
     this.mapView.markerLngLat.next(lngLat)
+  }
+
+  get formattedDirectionDistance(): string {
+    if (this.currentRouteDirection) {
+      if (this.currentRouteDirection.distance < 1000) {
+        return `${this.currentRouteDirection.distance.toFixed(0)} m`
+      }
+      return `${(this.currentRouteDirection.distance / 1000).toFixed(1)} km`
+    }
+    return ''
+  }
+
+  get formattedDirectionDuration(): string {
+    if (this.currentRouteDirection) {
+      return `${(this.currentRouteDirection.duration / 60).toFixed(0)} minutes`
+    }
+    return ''
   }
 
   currentMarkerString(): string {
@@ -48,12 +101,15 @@ export class MapPage implements AfterViewInit {
   }
 
   currentPlaygroundResult: PlaygroundResult = undefined
+  currentPlayground: Playground = undefined
+  currentRouteDirection: DirectionRoute = undefined
 
   constructor(
     private playgroundService: PlaygroundService,
     private locationService: LocationService,
     private geocodingService: ReverseGeocodingService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private modalController: ModalController
   ) {}
 
   ngAfterViewInit() {
@@ -78,7 +134,7 @@ export class MapPage implements AfterViewInit {
     if (this.isLoadingPlaygrounds || !this.markerLngLat) {
       return
     }
-    this.mapView.addPinRadiusToMap()
+    this.mapView.updateUI()
     this.isLoadingPlaygrounds = true
     this.playgroundService.loadPlaygroundWithLatLng(
       this.markerLngLat[1],
@@ -114,6 +170,35 @@ export class MapPage implements AfterViewInit {
         }
       )
     }
+  }
+
+  async openPlaygroundDetails(playground: Playground) {
+    this.currentPlayground = undefined
+    if (playground) {
+      const modal = await this.modalController.create({
+        component: PlaygroundDetailComponent,
+        breakpoints: [0, 0.5],
+        initialBreakpoint: 0.5,
+        backdropBreakpoint: 0.5,
+        swipeToClose: true,
+        backdropDismiss: true,
+        componentProps: {
+          playground,
+          markerLngLat: this.markerLngLat,
+        },
+      })
+      modal.onDidDismiss().then(async (data) => {
+        const directions: Directions = data.data
+        if (directions && directions.routes && directions.routes.length) {
+          this.currentRouteDirection = directions.routes[0]
+          const route = directions.routes[0].geometry.coordinates
+          await this.mapView.addRoute(route)
+          this.currentPlayground = playground
+        }
+      })
+      await modal.present()
+    }
+    this.isSearchActive = false
   }
 
   private async showRequestFailedToast(repeatHandler: () => void) {
@@ -153,18 +238,23 @@ export class MapPage implements AfterViewInit {
       return
     }
     this.hasUpdatedSearchParams = true
-    this.mapView.addPinRadiusToMap()
+    this.mapView.updateUI()
   }
 
   onSearchToggle() {
     this.isSearchActive = !this.isSearchActive
   }
 
+  onDirectionToggle() {
+    this.currentRouteDirection = undefined
+    this.mapView.toggleUIMode(MapMode.marker)
+  }
+
   async onCurrentLocationClick() {
     const location = await this.locationService.getCurrentLocation()
     this.markerLngLat = [location.coords.longitude, location.coords.latitude]
     this.runGeocoding()
-    this.mapView.addPinRadiusToMap()
+    this.mapView.updateUI()
     this.hasUpdatedSearchParams = true
     this.usesCurrentLocation = true
   }

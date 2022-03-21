@@ -1,8 +1,14 @@
+export enum MapMode {
+  marker,
+  route,
+}
 export enum MapSource {
   playgrounds = 'playgrounds-source',
   privatePlaygrounds = 'private-playgrounds-source',
-  playgroundsBounds = 'playgrounds-bounds',
+  playgroundsBounds = 'playgrounds-bounds-source',
+  playgroundsBoundsOutline = 'playgrounds-bounds-outline-source',
   markerHalo = 'marker-halo-source',
+  markerHaloOutline = 'marker-halo-outline-source',
   route = 'route-source',
   routeStart = 'route-start-source',
   routeEnd = 'route-end-source',

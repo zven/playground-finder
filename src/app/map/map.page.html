@@ -1,10 +1,10 @@
 <ion-content [fullscreen]="true">
-  <app-map-view id="map" [searchRadius]="searchRadius"></app-map-view>
-  <div
-    id="search"
-    *ngIf="isSearchActive && !isLoadingPlaygrounds"
-    class="padding-safe-area-top"
-  >
+  <app-map-view
+    id="map"
+    [searchRadius]="searchRadius"
+    [parent]="this"
+  ></app-map-view>
+  <div id="modal" *ngIf="showSearch" class="padding-safe-area-top search">
     <ion-item>
       <ion-icon id="title-icon" name="compass-outline"></ion-icon>
       <ion-label *ngIf="!isLoadingMarkerAddress">
@@ -44,17 +44,52 @@
       Move the marker on the map and find nearby playgrounds…
     </p>
   </div>
-  <div id="loading" *ngIf="isLoadingPlaygrounds" class="padding-safe-area-top">
+
+  <div
+    id="modal"
+    *ngIf="showDirections"
+    class="padding-safe-area-top directions"
+  >
+    <ion-item>
+      <div class="table">
+        <div class="column">
+          <ion-icon name="balloon-outline" size="large"></ion-icon>
+          {{ currentPlayground.name }}
+        </div>
+        <div class="column">
+          <ion-icon name="code-working-outline" size="large"></ion-icon>
+          {{ formattedDirectionDistance }}
+        </div>
+        <div class="column">
+          <ion-icon name="time-outline" size="large"></ion-icon>
+          {{ formattedDirectionDuration }}
+        </div>
+      </div>
+      <ion-icon
+        slot="end"
+        name="trash-outline"
+        color="danger"
+        (click)="onDirectionToggle()"
+      ></ion-icon>
+    </ion-item>
+  </div>
+
+  <div
+    id="modal"
+    *ngIf="showLoadingPlaygrounds"
+    class="padding-safe-area-top loading"
+  >
     <h4>
       <ion-spinner color="primary"></ion-spinner>
       Loading playgrounds…
     </h4>
   </div>
+
   <ion-fab
     vertical="top"
     horizontal="end"
     slot="fixed"
-    *ngIf="!isSearchActive && !isLoadingPlaygrounds"
+    *ngIf="showSearchModalButton"
   >
     <ion-fab-button (click)="onSearchToggle()">
       <ion-icon name="search-outline"></ion-icon>
@@ -63,7 +98,7 @@
 
   <ion-button
     id="search-button"
-    *ngIf="hasUpdatedSearchParams && !isLoadingPlaygrounds"
+    *ngIf="showSearchPlaygroundsButton"
     (click)="onSearchPlaygroundsClick()"
   >
     Look for playgrounds in this area
