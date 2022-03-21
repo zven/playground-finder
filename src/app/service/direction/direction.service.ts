@@ -30,6 +30,7 @@ export class DirectionService {
         }
       },
       (error) => {
+        callback(false, undefined)
         console.error(`request failed: ${JSON.stringify(error)}`)
       }
     )

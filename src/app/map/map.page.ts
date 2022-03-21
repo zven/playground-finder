@@ -39,7 +39,6 @@ export class MapPage implements AfterViewInit {
     if (this.markerAddress) {
       return this.markerAddress
     }
-    console.log(this.markerLngLat)
     if (this.markerLngLat) {
       return `${this.markerLngLat[1].toFixed(
         3

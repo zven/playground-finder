@@ -1,5 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core'
-import { ModalController, ToastButton, ToastController } from '@ionic/angular'
+import {
+  LoadingController,
+  ModalController,
+  ToastButton,
+  ToastController,
+} from '@ionic/angular'
 import { DirectionService } from '../service/direction/direction.service'
 import { LocationService } from '../service/location/location.service'
 import { Playground } from '../service/playground-service/playground'
@@ -12,6 +17,7 @@ import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-ge
 })
 export class PlaygroundDetailComponent implements OnInit {
   @Input() playground: Playground
+  @Input() markerLngLat: [number, number]
 
   isLoadingAddress = false
 
@@ -20,7 +26,8 @@ export class PlaygroundDetailComponent implements OnInit {
     private reverseGeocoding: ReverseGeocodingService,
     private locationService: LocationService,
     private directionService: DirectionService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private loadingController: LoadingController
   ) {}
 
   async ngOnInit() {
@@ -42,15 +49,19 @@ export class PlaygroundDetailComponent implements OnInit {
   }
 
   async onNavigateClick() {
-    const location = await this.locationService.getCurrentLocation()
-    if (location && location.coords) {
+    const location = await this.getCurrentLocationLngLat()
+    console.log(this.markerLngLat)
+    console.log(location)
+    if (location && location.length === 2) {
       const playgroundLonLat: [number, number] = this.playground.codedLatLon
         ? [this.playground.codedLatLon[1], this.playground.codedLatLon[0]]
         : [this.playground.lon, this.playground.lat]
+      await this.showDirectionsLoading()
       this.directionService.loadDirections(
-        [location.coords.longitude, location.coords.latitude],
+        location,
         playgroundLonLat,
         async (success, directions) => {
+          this.hideLoading()
           if (success) {
             this.modalController.dismiss(directions)
           } else if (directions && directions.message) {
@@ -71,6 +82,25 @@ export class PlaygroundDetailComponent implements OnInit {
 
   onCloseClick() {
     this.modalController.dismiss()
+  }
+
+  private async getCurrentLocationLngLat(): Promise<[number, number]> {
+    const location = await this.locationService.getCurrentLocation()
+    if (location && location.coords) {
+      return [location.coords.longitude, location.coords.latitude]
+    }
+    return this.markerLngLat
+  }
+
+  private async showDirectionsLoading() {
+    const loading = await this.loadingController.create({
+      message: 'Loading directions…',
+    })
+    await loading.present()
+  }
+
+  private async hideLoading() {
+    await this.loadingController.dismiss()
   }
 
   private async showNoLocationToast() {

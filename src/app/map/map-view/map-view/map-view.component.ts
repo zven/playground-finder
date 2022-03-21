@@ -38,13 +38,22 @@ export class MapViewComponent implements OnInit {
   >(MapViewComponent.INITIAL_LON_LAT)
   markerAddress: string
 
-  mapPadding(): { left: number; right: number; top: number; bottom: number } {
+  get mapPadding(): {
+    left: number
+    right: number
+    top: number
+    bottom: number
+  } {
     return {
       left: 100,
       right: 100,
       top: 100,
       bottom: 100,
     }
+  }
+
+  get verticalSheetPadding(): number {
+    return window.innerHeight / 2 - 100
   }
 
   constructor(private modalController: ModalController) {
@@ -83,7 +92,7 @@ export class MapViewComponent implements OnInit {
             speed: 0.75,
             padding: {
               top: 0,
-              bottom: window.innerHeight / 2 - 100,
+              bottom: this.verticalSheetPadding,
               left: 0,
               right: 0,
             },
@@ -107,7 +116,6 @@ export class MapViewComponent implements OnInit {
       )
 
       this.markerLngLat.subscribe((lngLat) => {
-        console.log(lngLat)
         if (marker) marker.setLngLat(lngLat)
       })
 
@@ -152,8 +160,6 @@ export class MapViewComponent implements OnInit {
       this.map.once('idle', () => {
         if (result && result.lon && result.lat) {
           this.markerLngLat.next([result.lon, result.lat])
-          console.log([result.lon, result.lat])
-          console.log(this.markerLngLat.getValue())
           this.addPlaygroundResultToMap(result)
           this.addPinRadiusToMap()
         }
@@ -338,7 +344,7 @@ export class MapViewComponent implements OnInit {
     } catch (e) {}
   }
 
-  async addRouteToMap(route: string) {
+  async addRouteToMap(route: any) {
     const geojson = {
       type: 'Feature',
       properties: {},
@@ -368,6 +374,18 @@ export class MapViewComponent implements OnInit {
         'line-opacity': 0.75,
       },
     })
+    // zoom to route
+    var bounds = route.reduce(function (bounds, coord) {
+      return bounds.extend(coord)
+    }, new MapboxGl.LngLatBounds(route[0], route[1]))
+    this.map.fitBounds(bounds, {
+      padding: {
+        top: this.verticalSheetPadding,
+        bottom: 0,
+        left: 0,
+        right: 0,
+      },
+    })
   }
 
   private async openPlaygroundDetails(id: number) {
@@ -384,6 +402,7 @@ export class MapViewComponent implements OnInit {
         backdropDismiss: true,
         componentProps: {
           playground,
+          markerLngLat: this.markerLngLat.value,
         },
       })
       modal.onDidDismiss().then(async (data) => {
@@ -391,8 +410,6 @@ export class MapViewComponent implements OnInit {
         if (directions && directions.routes && directions.routes.length) {
           const route = directions.routes[0].geometry.coordinates
           await this.addRouteToMap(route)
-        } else {
-          this.flyTo([playground.lon, playground.lat])
         }
       })
       await modal.present()

@@ -88,16 +88,20 @@ export class LocationService {
   }
 
   async getCurrentLocation(): Promise<Position> {
-    await this.checkForPermissions()
-    if (await this.shouldUseCachedPosition()) {
-      // return cached position if eligible
-      return this.filterPositionWithAccuracy(this.cachedPosition)
+    try {
+      await this.checkForPermissions()
+      if (await this.shouldUseCachedPosition()) {
+        // return cached position if eligible
+        return this.filterPositionWithAccuracy(this.cachedPosition)
+      }
+      const position = await Geolocation.getCurrentPosition()
+      if (position) {
+        this.cachedPosition = await this.filterPositionWithAccuracy(position)
+        return this.cachedPosition
+      }
+      return undefined
+    } catch (e) {
+      return undefined
     }
-    const position = await Geolocation.getCurrentPosition()
-    if (position) {
-      this.cachedPosition = await this.filterPositionWithAccuracy(position)
-      return this.cachedPosition
-    }
-    return undefined
   }
 }
