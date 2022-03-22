@@ -189,6 +189,7 @@ export class MapViewComponent implements OnInit {
         break
     }
   }
+
   private removeLayersAndSources(layersAndSources: string[]) {
     layersAndSources.forEach((l) => {
       try {
@@ -199,6 +200,18 @@ export class MapViewComponent implements OnInit {
       try {
         this.map.removeSource(s)
       } catch (e) {}
+    })
+  }
+
+  showUserLocation() {
+    const geoLocateControl = new MapboxGl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true,
+      },
+      // When active the map will receive updates to the device's location as it changes.
+      trackUserLocation: true,
+      // Draw an arrow next to the location dot to indicate which direction the device is heading.
+      showUserHeading: true,
     })
   }
 
@@ -222,11 +235,25 @@ export class MapViewComponent implements OnInit {
     }
   }
 
-  flyTo(center: any, zoom: number = 18) {
+  flyTo(
+    center: any,
+    zoom: number = 18,
+    pitch: number = 0,
+    bearing: number = 0,
+    padding: {
+      left: number
+      right: number
+      top: number
+      bottom: number
+    } = undefined
+  ) {
+    console.log(padding)
     this.map.flyTo({
-      padding: this.mapPadding,
+      padding: padding ?? this.mapPadding,
       zoom: zoom,
       center: center,
+      pitch: pitch,
+      bearing: bearing,
       essential: true,
     })
   }

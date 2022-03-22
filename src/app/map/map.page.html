@@ -49,6 +49,7 @@
     id="modal"
     *ngIf="showDirections"
     class="padding-safe-area-top directions"
+    #directionsModal
   >
     <ion-item>
       <div class="table">
@@ -72,6 +73,27 @@
         (click)="onDirectionToggle()"
       ></ion-icon>
     </ion-item>
+    <ion-item
+      class="instruction-title"
+      *ngIf="directionInstructions.length"
+      lines="none"
+      (click)="showDirectionInstructions = !showDirectionInstructions"
+    >
+      Instructions
+      <ion-icon
+        slot="end"
+        [name]="showDirectionInstructions ? 'chevron-up' : 'chevron-down'"
+      ></ion-icon>
+    </ion-item>
+    <ion-list class="instructions" *ngIf="showDirectionInstructions">
+      <ion-item
+        *ngFor="let instruction of directionInstructions; index as i"
+        (click)="onInstructionClick(i)"
+      >
+        <ion-chip slot="start" color="dark" outline="true">{{ i+1 }}</ion-chip>
+        {{ instruction }}
+      </ion-item>
+    </ion-list>
   </div>
 
   <div

@@ -7,10 +7,13 @@ import { Directions, DirectionsCode } from './direction'
   providedIn: 'root',
 })
 export class DirectionService {
-  static API_BASE_URL = 'https://api.mapbox.com/directions/v5/'
-  static API_WALKING_PROFILE = 'mapbox/walking'
-  static API_TOKEN_PARAM = 'access_token'
-  static API_GEOM_GEOJSON_PARAM = 'geometries=geojson'
+  private static API_BASE_URL = 'https://api.mapbox.com/directions/v5/'
+  private static API_WALKING_PROFILE = 'mapbox/walking'
+  private static API_TOKEN_PARAM = `access_token=${Constants.MAPBOX_TOKEN}`
+  private static API_GEOM_GEOJSON_PARAM = 'geometries=geojson'
+  private static API_TBT_PARAM = 'steps=true'
+  private static API_LANG_PARAM = 'language=en'
+  private static COORD_DECIMALS = 6
 
   constructor(private httpClient: HttpClient) {}
 
@@ -41,13 +44,14 @@ export class DirectionService {
     toLonLat: [number, number]
   ): string {
     const path = `${DirectionService.API_BASE_URL}${DirectionService.API_WALKING_PROFILE}`
-    const coordDecs = 6
-    const coordinates = `${fromLonLat[0].toFixed(
-      coordDecs
-    )},${fromLonLat[1].toFixed(coordDecs)};${toLonLat[0].toFixed(
-      coordDecs
-    )},${toLonLat[1].toFixed(coordDecs)}`
-    const params = `${DirectionService.API_GEOM_GEOJSON_PARAM}&${DirectionService.API_TOKEN_PARAM}=${Constants.MAPBOX_TOKEN}`
+    const from = `${fromLonLat[0].toFixed(
+      DirectionService.COORD_DECIMALS
+    )},${fromLonLat[1].toFixed(DirectionService.COORD_DECIMALS)}`
+    const to = `${toLonLat[0].toFixed(
+      DirectionService.COORD_DECIMALS
+    )},${toLonLat[1].toFixed(DirectionService.COORD_DECIMALS)}`
+    const coordinates = `${from};${to}`
+    const params = `${DirectionService.API_GEOM_GEOJSON_PARAM}&${DirectionService.API_TBT_PARAM}&${DirectionService.API_LANG_PARAM}&${DirectionService.API_TOKEN_PARAM}`
     return `${path}/${coordinates}?${params}`
   }
 }

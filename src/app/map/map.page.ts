@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core'
+import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core'
 import { ModalController, ToastButton, ToastController } from '@ionic/angular'
 import { PlaygroundService } from '../service/playground-service/playground.service'
 import {
@@ -10,7 +10,11 @@ import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-ge
 import { LocationService } from '../service/location/location.service'
 import { MapViewComponent } from './map-view/map-view/map-view.component'
 import { PlaygroundDetailComponent } from '../playground-detail/playground-detail.component'
-import { DirectionRoute, Directions } from '../service/direction/direction'
+import {
+  DirectionRoute,
+  DirectionRouteManeuver,
+  Directions,
+} from '../service/direction/direction'
 import { MapMode } from './map-view/map-view/map'
 
 @Component({
@@ -20,11 +24,13 @@ import { MapMode } from './map-view/map-view/map'
 })
 export class MapPage implements AfterViewInit {
   @ViewChild(MapViewComponent) mapView: MapViewComponent
+  @ViewChild('directionsModal') directionsModalView: ElementRef
 
   isInitialLoading: boolean = true
   isLoadingPlaygrounds: boolean = false
   isLoadingMarkerAddress: boolean = false
   isSearchActive: boolean = false
+  showDirectionInstructions: boolean = false
   hasUpdatedSearchParams: boolean = false
   usesCurrentLocation: boolean = false
   searchRadius: number = 2000
@@ -86,6 +92,23 @@ export class MapPage implements AfterViewInit {
       return `${(this.currentRouteDirection.duration / 60).toFixed(0)} minutes`
     }
     return ''
+  }
+
+  get directionManuevers(): DirectionRouteManeuver[] {
+    if (this.currentRouteDirection && this.currentRouteDirection.legs) {
+      return this.currentRouteDirection.legs[0].steps.map((s) => {
+        return s.maneuver
+      })
+    }
+    return []
+  }
+
+  get directionInstructions(): string[] {
+    const maneuvers = this.directionManuevers
+    if (maneuvers && maneuvers.length) {
+      return maneuvers.map((m) => m.instruction)
+    }
+    return []
   }
 
   currentMarkerString(): string {
@@ -248,6 +271,20 @@ export class MapPage implements AfterViewInit {
   onDirectionToggle() {
     this.currentRouteDirection = undefined
     this.mapView.toggleUIMode(MapMode.marker)
+  }
+
+  onInstructionClick(i: number) {
+    const maneuvers = this.directionManuevers
+    if (maneuvers && maneuvers.length > i) {
+      const m = maneuvers[i]
+      const padding = {
+        left: 0,
+        right: 0,
+        top: this.directionsModalView.nativeElement.offsetHeight,
+        bottom: 0,
+      }
+      this.mapView.flyTo(m.location, 18, 50, m.bearing_before, padding)
+    }
   }
 
   async onCurrentLocationClick() {

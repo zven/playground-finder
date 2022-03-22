@@ -25,8 +25,28 @@ export class DirectionRouteLeg {
   summary: string
   weight: number
   duration: number
-  steps: any[]
+  steps: DirectionRouteStep[]
   distance: number
+}
+
+export class DirectionRouteStep {
+  name: string
+  driving_side: string
+  weight: number
+  mode: string
+  intersections: any[]
+  maneuver: DirectionRouteManeuver
+  duration: number
+  distance: number
+  geometry: any
+}
+
+export class DirectionRouteManeuver {
+  type: string
+  instruction: string
+  bearing_after: number
+  bearing_before: number
+  location: [number, number]
 }
 
 export enum DirectionsCode {

@@ -73,6 +73,22 @@ ion-fab {
   }
 }
 
+.instructions {
+  overflow-y: auto;
+  height: 150px;
+  border-radius: 0 16px 16px 0;
+  background: #b4b4b413;
+  ion-item {
+    --background: transparent;
+  }
+}
+
+.instruction-title {
+  width: 100%;
+  text-align: center;
+  font-weight: 500;
+}
+
 #search-button {
   position: absolute;
   left: 50%;
