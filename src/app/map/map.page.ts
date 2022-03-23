@@ -16,6 +16,7 @@ import {
   Directions,
 } from '../service/direction/direction'
 import { MapMode } from './map-view/map-view/map'
+import { HeadingService } from '../service/heading/heading.service'
 
 @Component({
   selector: 'app-map',
@@ -35,6 +36,19 @@ export class MapPage implements AfterViewInit {
   usesCurrentLocation: boolean = false
   searchRadius: number = 2000
   markerAddress: string
+
+  currentPlaygroundResult: PlaygroundResult = undefined
+  currentPlayground: Playground = undefined
+  currentRouteDirection: DirectionRoute = undefined
+
+  constructor(
+    private playgroundService: PlaygroundService,
+    private locationService: LocationService,
+    private geocodingService: ReverseGeocodingService,
+    private headingService: HeadingService,
+    private toastController: ToastController,
+    private modalController: ModalController
+  ) {}
 
   formattedSearchRadius(): string {
     return `${(this.searchRadius / 1000).toFixed(1)} km`
@@ -122,18 +136,6 @@ export class MapPage implements AfterViewInit {
     }
     return ''
   }
-
-  currentPlaygroundResult: PlaygroundResult = undefined
-  currentPlayground: Playground = undefined
-  currentRouteDirection: DirectionRoute = undefined
-
-  constructor(
-    private playgroundService: PlaygroundService,
-    private locationService: LocationService,
-    private geocodingService: ReverseGeocodingService,
-    private toastController: ToastController,
-    private modalController: ModalController
-  ) {}
 
   ngAfterViewInit() {
     this.mapView.markerLngLat.subscribe(() => {
@@ -288,10 +290,14 @@ export class MapPage implements AfterViewInit {
   }
 
   async onCurrentLocationClick() {
+    this.headingService.registerListener((heading) => {
+      this.mapView.userHeading.next(heading)
+    })
     const location = await this.locationService.getCurrentLocation()
     this.markerLngLat = [location.coords.longitude, location.coords.latitude]
     this.runGeocoding()
-    this.mapView.updateUI()
+    this.mapView.userPosition.next(location)
+    this.mapView.toggleUIMode(MapMode.userLocation)
     this.hasUpdatedSearchParams = true
     this.usesCurrentLocation = true
   }

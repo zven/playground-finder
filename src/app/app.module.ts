@@ -10,6 +10,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader'
 import { AppRoutingModule } from './app-routing.module'
 import { AppComponent } from './app.component'
 import { ServicesModule } from './service/services.module'
+import { DeviceOrientation } from '@awesome-cordova-plugins/device-orientation/ngx'
 
 export function createTranslateLoader(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json')
@@ -32,7 +33,10 @@ export function createTranslateLoader(http: HttpClient) {
       },
     }),
   ],
-  providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }],
+  providers: [
+    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    DeviceOrientation,
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

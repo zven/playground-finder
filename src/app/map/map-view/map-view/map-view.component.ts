@@ -5,6 +5,7 @@ import {
 } from '../../../service/playground-service/playground'
 import { MapIcon, MapMode, MapSource } from './map'
 import { Constants } from 'src/app/utils/constants'
+import { Position } from '@capacitor/geolocation'
 
 import * as MapboxGl from 'mapbox-gl'
 import * as Turf from '@turf/turf'
@@ -17,24 +18,25 @@ import { BehaviorSubject } from 'rxjs'
 })
 export class MapViewComponent implements OnInit {
   private map: MapboxGl.Map
-  static INITIAL_LON_LAT: [number, number] = [
-    7.6277627964892165, 51.963484569674435,
-  ]
-  static INITIAL_ZOOM = 12
+
   @Input() searchRadius: number
   @Input() parent: any
 
+  mapMode: MapMode = MapMode.marker
   hasUpdatedSearchParams: boolean = false
   usesCurrentLocation: boolean = false
-  markerLngLat: BehaviorSubject<[number, number]> = new BehaviorSubject<
-    [number, number]
-  >(MapViewComponent.INITIAL_LON_LAT)
-  showMarker: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true)
   markerAddress: string
   currentPlaygroundResult: PlaygroundResult = undefined
   currentRoute: any = undefined
 
-  mapMode: MapMode = MapMode.marker
+  markerLngLat: BehaviorSubject<[number, number]> = new BehaviorSubject<
+    [number, number]
+  >(Constants.MAP_INITIAL_LON_LAT)
+  showMarker: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true)
+  userPosition: BehaviorSubject<Position> = new BehaviorSubject<Position>(
+    undefined
+  )
+  userHeading: BehaviorSubject<number> = new BehaviorSubject<number>(undefined)
 
   get mapPadding(): {
     left: number
@@ -62,8 +64,8 @@ export class MapViewComponent implements OnInit {
     this.map = new MapboxGl.Map({
       container: 'mapbox',
       style: 'mapbox://styles/mapbox/streets-v11',
-      zoom: MapViewComponent.INITIAL_ZOOM,
-      center: MapViewComponent.INITIAL_LON_LAT,
+      zoom: Constants.MAP_INITIAL_ZOOM,
+      center: Constants.MAP_INITIAL_LON_LAT,
     })
 
     this.map.on('load', () => {
@@ -74,6 +76,11 @@ export class MapViewComponent implements OnInit {
       this.loadImage('assets/balloon-lock.png', MapIcon.privatePlaygrounds)
       this.loadImage('assets/start.png', MapIcon.routeStart)
       this.loadImage('assets/stop.png', MapIcon.routeEnd)
+      this.loadImage('assets/user-location.png', MapIcon.userLocation)
+      this.loadImage(
+        'assets/user-location-direction.png',
+        MapIcon.userLocationDirection
+      )
 
       // playgrounds
       this.map.on(
@@ -145,6 +152,18 @@ export class MapViewComponent implements OnInit {
         this.movedMarker([lngLat.lng, lngLat.lat])
       })
     })
+
+    this.userPosition.subscribe((p) => {
+      if (p && this.mapMode === MapMode.userLocation) {
+        this.updateUI()
+      }
+    })
+
+    this.userHeading.subscribe((h) => {
+      if (h && this.mapMode === MapMode.userLocation) {
+        this.addUserLocationToMap()
+      }
+    })
   }
 
   private loadImage(path: string, name: string) {
@@ -161,14 +180,27 @@ export class MapViewComponent implements OnInit {
   toggleUIMode(mode: MapMode) {
     this.mapMode = mode
     switch (mode) {
+      case MapMode.userLocation:
+        this.showMarker.next(false)
+        this.addPinRadius()
+        this.addPlaygroundResultToMap()
+        this.addUserLocationToMap()
+        this.removeLayersAndSources([
+          MapSource.route,
+          MapSource.routeStart,
+          MapSource.routeEnd,
+        ])
+        break
       case MapMode.marker:
         this.showMarker.next(true)
-        this.addPinRadius(this.markerLngLat.value)
+        this.addPinRadius()
         this.addPlaygroundResultToMap()
         this.removeLayersAndSources([
           MapSource.route,
           MapSource.routeStart,
           MapSource.routeEnd,
+          MapSource.userLocation,
+          MapSource.userLocationHalo,
         ])
         this.zoomToPlaygrounds()
         break
@@ -192,26 +224,14 @@ export class MapViewComponent implements OnInit {
 
   private removeLayersAndSources(layersAndSources: string[]) {
     layersAndSources.forEach((l) => {
-      try {
+      if (this.map.getLayer(l)) {
         this.map.removeLayer(l)
-      } catch (e) {}
+      }
     })
     layersAndSources.forEach((s) => {
-      try {
+      if (this.map.getSource(s)) {
         this.map.removeSource(s)
-      } catch (e) {}
-    })
-  }
-
-  showUserLocation() {
-    const geoLocateControl = new MapboxGl.GeolocateControl({
-      positionOptions: {
-        enableHighAccuracy: true,
-      },
-      // When active the map will receive updates to the device's location as it changes.
-      trackUserLocation: true,
-      // Draw an arrow next to the location dot to indicate which direction the device is heading.
-      showUserHeading: true,
+      }
     })
   }
 
@@ -247,7 +267,6 @@ export class MapViewComponent implements OnInit {
       bottom: number
     } = undefined
   ) {
-    console.log(padding)
     this.map.flyTo({
       padding: padding ?? this.mapPadding,
       zoom: zoom,
@@ -256,6 +275,60 @@ export class MapViewComponent implements OnInit {
       bearing: bearing,
       essential: true,
     })
+  }
+
+  private addUserLocationToMap() {
+    const position = this.userPosition.value
+    if (position && position.coords) {
+      const heading = this.userHeading.value || position.coords.heading
+      const icon = heading
+        ? MapIcon.userLocationDirection
+        : MapIcon.userLocation
+      this.addIcon(
+        MapSource.userLocation,
+        icon,
+        [position.coords.longitude, position.coords.latitude],
+        heading
+      )
+      this.addPositionHalo()
+    }
+  }
+
+  private addPositionHalo() {
+    const position = this.userPosition.value
+    if (!position || !position.coords) return
+    if (
+      !position.coords.accuracy &&
+      this.map.getLayer(MapSource.userLocationHalo)
+    ) {
+      this.map.removeLayer(MapSource.userLocationHalo)
+    }
+    const haloData = Turf.circle(
+      Turf.point([position.coords.longitude, position.coords.latitude]),
+      position.coords.accuracy,
+      {
+        steps: 64,
+        units: 'meters',
+      }
+    )
+    const haloSource = this.map.getSource(MapSource.userLocationHalo)
+    if (haloSource) {
+      haloSource.setData(haloData)
+    }
+    if (!this.map.getLayer(MapSource.userLocationHalo)) {
+      this.map.addLayer({
+        id: MapSource.userLocationHalo,
+        type: 'fill',
+        source: {
+          type: 'geojson',
+          data: haloData,
+        },
+        paint: {
+          'fill-color': '#F8B200',
+          'fill-opacity': 0.1,
+        },
+      })
+    }
   }
 
   private addPlaygroundResultToMap() {
@@ -274,8 +347,18 @@ export class MapViewComponent implements OnInit {
   }
 
   private addPinRadius(lngLat: [number, number] = undefined) {
-    if (!this.showMarker.value) return
-    const markerLngLat = lngLat ?? this.markerLngLat.value
+    if (this.mapMode === MapMode.route) return
+    let markerLngLat: [number, number] = undefined
+    if (lngLat) {
+      markerLngLat = lngLat
+    } else if (this.mapMode === MapMode.marker) {
+      markerLngLat = markerLngLat
+    } else if (this.mapMode === MapMode.userLocation) {
+      const position = this.userPosition.value
+      if (position && position.coords) {
+        markerLngLat = [position.coords.longitude, position.coords.latitude]
+      }
+    }
     if (!markerLngLat) {
       return
     }
@@ -479,32 +562,62 @@ export class MapViewComponent implements OnInit {
   private addRouteIcon(isStartIcon: boolean) {
     const route = this.currentRoute
     if (!route) return
-    const coordinates = isStartIcon ? route[0] : route[route.length - 1]
+    if (isStartIcon) {
+      this.addIcon(MapSource.routeStart, MapIcon.routeStart, route[0])
+    } else {
+      this.addIcon(
+        MapSource.routeEnd,
+        MapIcon.routeEnd,
+        route[route.length - 1]
+      )
+    }
+  }
+
+  private addIcon(
+    iconSource: string,
+    icon: string,
+    coordinates: [number, number],
+    rotate: number = undefined
+  ) {
+    const properties = rotate
+      ? {
+          rotate: rotate,
+        }
+      : {}
     const geojson = {
       type: 'Feature',
       geometry: {
         type: 'Point',
         coordinates,
       },
+      properties: properties,
     }
-    const iconSource = isStartIcon ? MapSource.routeStart : MapSource.routeEnd
     const source = this.map.getSource(iconSource)
     if (source) {
       source.setData(geojson)
     }
-    this.map.addLayer({
-      id: iconSource,
-      type: 'symbol',
-      source: {
-        type: 'geojson',
-        data: geojson,
-      },
-      layout: {
-        'icon-image': isStartIcon ? MapIcon.routeStart : MapIcon.routeEnd,
-        'icon-anchor': 'center',
-        'icon-size': 0.2,
-      },
-    })
+
+    if (!this.map.getLayer(iconSource)) {
+      this.map.addLayer({
+        id: iconSource,
+        type: 'symbol',
+        source: {
+          type: 'geojson',
+          data: geojson,
+        },
+        layout: {
+          'icon-image': icon,
+          'icon-anchor': 'center',
+          'icon-size': 0.2,
+          'icon-rotate': ['get', 'rotate'],
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+        },
+      })
+      // move user location to top
+      this.map.moveLayer(MapSource.userLocationHalo)
+      this.map.moveLayer(MapSource.userLocation)
+    }
   }
 
   private zoomToRoute() {

@@ -1,5 +1,6 @@
 export enum MapMode {
   marker,
+  userLocation,
   route,
 }
 export enum MapSource {
@@ -12,6 +13,8 @@ export enum MapSource {
   route = 'route-source',
   routeStart = 'route-start-source',
   routeEnd = 'route-end-source',
+  userLocation = 'user-location-source',
+  userLocationHalo = 'user-location-halo-source',
 }
 
 export enum MapIcon {
@@ -19,4 +22,6 @@ export enum MapIcon {
   privatePlaygrounds = 'private-playgrounds-icon',
   routeStart = 'route-start-icon',
   routeEnd = 'route-end-icon',
+  userLocation = 'user-location-icon',
+  userLocationDirection = 'user-location-direction-icon',
 }
