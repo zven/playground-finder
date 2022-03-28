@@ -4,7 +4,12 @@
     [searchRadius]="searchRadius"
     [parent]="this"
   ></app-map-view>
-  <div id="modal" *ngIf="showSearch" class="padding-safe-area-top search">
+  <div
+    id="modal"
+    *ngIf="showSearch"
+    class="padding-safe-area-top search"
+    #searchModal
+  >
     <ion-item>
       <ion-icon id="title-icon" name="compass-outline"></ion-icon>
       <ion-label *ngIf="!isLoadingMarkerAddress">
@@ -14,11 +19,6 @@
         Loading address…
         <ion-spinner color="dark" name="lines-small"></ion-spinner>
       </ion-label>
-      <ion-icon
-        name="locate-outline"
-        [color]="usesCurrentLocation ? 'primary' : 'dark'"
-        (click)="onCurrentLocationClick()"
-      ></ion-icon>
       <ion-icon
         slot="end"
         name="close-outline"
@@ -71,7 +71,7 @@
         name="trash-outline"
         color="danger"
         size="small"
-        (click)="onDirectionToggle()"
+        (click)="onDirectionClear()"
       ></ion-icon>
     </ion-item>
     <ion-item
@@ -116,6 +116,15 @@
   >
     <ion-fab-button (click)="onSearchToggle()">
       <ion-icon name="search-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button *ngIf="!showDirections" (click)="onCurrentLocationToggle()">
+      <ion-icon [name]="usesCurrentLocation ? 'location' : 'locate'"></ion-icon>
+    </ion-fab-button>
+    <ion-fab-button *ngIf="showDirections" (click)="onNavigateToggle()">
+      <ion-icon [name]="isNavigating ? 'map' : 'navigate'"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 

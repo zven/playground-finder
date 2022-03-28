@@ -1,8 +1,14 @@
 export enum MapMode {
+  search,
+  route,
+  navigateRoute,
+}
+
+export enum MarkerMode {
   marker,
   userLocation,
-  route,
 }
+
 export enum MapSource {
   playgrounds = 'playgrounds-source',
   privatePlaygrounds = 'private-playgrounds-source',

@@ -15,8 +15,9 @@ import {
   DirectionRouteManeuver,
   Directions,
 } from '../service/direction/direction'
-import { MapMode } from './map-view/map-view/map'
+import { MapMode, MarkerMode } from './map-view/map-view/map'
 import { HeadingService } from '../service/heading/heading.service'
+import * as turf from '@turf/turf'
 
 @Component({
   selector: 'app-map',
@@ -26,11 +27,13 @@ import { HeadingService } from '../service/heading/heading.service'
 export class MapPage implements AfterViewInit {
   @ViewChild(MapViewComponent) mapView: MapViewComponent
   @ViewChild('directionsModal') directionsModalView: ElementRef
+  @ViewChild('searchModal') searchModalView: ElementRef
 
   isInitialLoading: boolean = true
   isLoadingPlaygrounds: boolean = false
   isLoadingMarkerAddress: boolean = false
   isSearchActive: boolean = false
+  isNavigating: boolean = false
   showDirectionInstructions: boolean = false
   hasUpdatedSearchParams: boolean = false
   usesCurrentLocation: boolean = false
@@ -77,11 +80,8 @@ export class MapPage implements AfterViewInit {
   }
 
   get showSearchPlaygroundsButton(): boolean {
-    return (
-      this.hasUpdatedSearchParams &&
-      !this.showLoadingPlaygrounds &&
-      !this.showDirections
-    )
+    if (this.showLoadingPlaygrounds || this.showDirections) return false
+    return this.hasUpdatedSearchParams
   }
 
   get markerLngLat(): [number, number] {
@@ -140,10 +140,11 @@ export class MapPage implements AfterViewInit {
   ngAfterViewInit() {
     this.mapView.markerLngLat.subscribe(() => {
       this.runGeocoding()
-      this.hasUpdatedSearchParams = true
+      this.invalidateSearchParams()
     })
     const cachedResult = this.playgroundService.loadCachedPlaygroundResult()
     if (cachedResult) {
+      this.currentPlaygroundResult = cachedResult
       this.searchRadius = cachedResult.radiusMeters
       this.mapView.addResult(cachedResult)
     }
@@ -152,6 +153,24 @@ export class MapPage implements AfterViewInit {
   ionViewDidEnter() {
     if (history.state.center) {
       this.mapView.flyTo(history.state.center)
+    }
+  }
+
+  private invalidateSearchParams() {
+    if (this.currentPlaygroundResult) {
+      const isNewRadius =
+        Math.abs(
+          this.currentPlaygroundResult.radiusMeters - this.searchRadius
+        ) > 0.01
+      const from = turf.point([
+        this.currentPlaygroundResult.lon,
+        this.currentPlaygroundResult.lat,
+      ])
+      const to = turf.point(this.markerLngLat)
+      const isNewCoords = turf.distance(from, to, { units: 'meters' }) > 5
+      this.hasUpdatedSearchParams = isNewRadius || isNewCoords
+    } else {
+      this.hasUpdatedSearchParams = true
     }
   }
 
@@ -219,8 +238,15 @@ export class MapPage implements AfterViewInit {
           const route = directions.routes[0].geometry.coordinates
           await this.mapView.addRoute(route)
           this.currentPlayground = playground
+          this.mapView.additionalTopMapPadding.next(
+            this.directionsModalView.nativeElement.offsetHeight
+          )
+        } else {
+          this.mapView.additionalTopMapPadding.next(0)
         }
+        this.mapView.additionalBottomMapPadding.next(0)
       })
+      this.mapView.additionalBottomMapPadding.next(window.innerHeight / 2)
       await modal.present()
     }
     this.isSearchActive = false
@@ -262,43 +288,57 @@ export class MapPage implements AfterViewInit {
       this.isInitialLoading = false
       return
     }
-    this.hasUpdatedSearchParams = true
+    this.invalidateSearchParams()
     this.mapView.updateUI()
   }
 
   onSearchToggle() {
     this.isSearchActive = !this.isSearchActive
+    const h = this.isSearchActive
+      ? this.searchModalView.nativeElement.offsetHeight
+      : 0
+    this.mapView.additionalTopMapPadding.next(h)
   }
 
-  onDirectionToggle() {
+  onDirectionClear() {
     this.currentRouteDirection = undefined
-    this.mapView.toggleUIMode(MapMode.marker)
+    this.isNavigating = false
+    this.mapView.updateMapMode(MapMode.search)
+  }
+
+  onNavigateToggle() {
+    this.isNavigating = !this.isNavigating
+    const mode = this.isNavigating ? MapMode.navigateRoute : MapMode.route
+    this.mapView.updateMapMode(mode)
   }
 
   onInstructionClick(i: number) {
+    if (!this.mapView.isMapInteractionEnabled.value) return
     const maneuvers = this.directionManuevers
     if (maneuvers && maneuvers.length > i) {
       const m = maneuvers[i]
-      const padding = {
-        left: 0,
-        right: 0,
-        top: this.directionsModalView.nativeElement.offsetHeight,
-        bottom: 0,
-      }
-      this.mapView.flyTo(m.location, 18, 50, m.bearing_before, padding)
+      this.mapView.additionalTopMapPadding.next(
+        this.directionsModalView.nativeElement.offsetHeight
+      )
+      this.mapView.flyTo(m.location, 18, 50, m.bearing_before)
     }
   }
 
-  async onCurrentLocationClick() {
-    this.headingService.registerListener((heading) => {
-      this.mapView.userHeading.next(heading)
-    })
-    const location = await this.locationService.getCurrentLocation()
-    this.markerLngLat = [location.coords.longitude, location.coords.latitude]
-    this.runGeocoding()
-    this.mapView.userPosition.next(location)
-    this.mapView.toggleUIMode(MapMode.userLocation)
-    this.hasUpdatedSearchParams = true
-    this.usesCurrentLocation = true
+  async onCurrentLocationToggle() {
+    this.usesCurrentLocation = !this.usesCurrentLocation
+    if (this.usesCurrentLocation) {
+      this.headingService.registerListener((heading) => {
+        this.mapView.userHeading.next(heading)
+      })
+      const location = await this.locationService.getCurrentLocation()
+      this.markerLngLat = [location.coords.longitude, location.coords.latitude]
+      this.mapView.userPosition.next(location)
+      this.mapView.updateMarkerMode(MarkerMode.userLocation)
+      this.usesCurrentLocation = true
+    } else {
+      this.headingService.removeListener()
+      this.mapView.updateMarkerMode(MarkerMode.marker)
+    }
+    this.invalidateSearchParams()
   }
 }

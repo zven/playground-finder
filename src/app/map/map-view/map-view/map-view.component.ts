@@ -3,7 +3,7 @@ import {
   Playground,
   PlaygroundResult,
 } from '../../../service/playground-service/playground'
-import { MapIcon, MapMode, MapSource } from './map'
+import { MapIcon, MapMode, MapSource, MarkerMode } from './map'
 import { Constants } from 'src/app/utils/constants'
 import { Position } from '@capacitor/geolocation'
 
@@ -17,43 +17,77 @@ import { BehaviorSubject } from 'rxjs'
   styleUrls: ['./map-view.component.scss'],
 })
 export class MapViewComponent implements OnInit {
+  private static MAP_HANDLERS = [
+    'scrollZoom',
+    'boxZoom',
+    'dragRotate',
+    'dragPan',
+    'keyboard',
+    'doubleClickZoom',
+    'touchZoomRotate',
+  ]
+  private static MAP_PADDING = 50
+
   private map: MapboxGl.Map
+  private previousUserHeading: number = 0
 
   @Input() searchRadius: number
   @Input() parent: any
 
-  mapMode: MapMode = MapMode.marker
+  private mapMode: MapMode = MapMode.search
+  private markerMode: MarkerMode = MarkerMode.marker
+
   hasUpdatedSearchParams: boolean = false
   usesCurrentLocation: boolean = false
   markerAddress: string
   currentPlaygroundResult: PlaygroundResult = undefined
   currentRoute: any = undefined
 
+  isMapFlying: boolean = false
   markerLngLat: BehaviorSubject<[number, number]> = new BehaviorSubject<
     [number, number]
   >(Constants.MAP_INITIAL_LON_LAT)
   showMarker: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true)
+  shouldFollowUserLocation: BehaviorSubject<boolean> =
+    new BehaviorSubject<boolean>(false)
+  isMapInteractionEnabled: BehaviorSubject<boolean> =
+    new BehaviorSubject<boolean>(true)
   userPosition: BehaviorSubject<Position> = new BehaviorSubject<Position>(
     undefined
   )
   userHeading: BehaviorSubject<number> = new BehaviorSubject<number>(undefined)
+  additionalTopMapPadding: BehaviorSubject<number> =
+    new BehaviorSubject<number>(0)
+  additionalBottomMapPadding: BehaviorSubject<number> =
+    new BehaviorSubject<number>(0)
 
-  get mapPadding(): {
-    left: number
-    right: number
+  get defaultMapPadding(): {
     top: number
     bottom: number
+    left: number
+    right: number
   } {
     return {
-      left: 100,
-      right: 100,
-      top: 100,
-      bottom: 100,
+      top: MapViewComponent.MAP_PADDING,
+      bottom: MapViewComponent.MAP_PADDING,
+      left: MapViewComponent.MAP_PADDING,
+      right: MapViewComponent.MAP_PADDING,
     }
   }
 
-  get verticalSheetPadding(): number {
-    return window.innerHeight / 2 - 100
+  get mapPadding(): {
+    top: number
+    bottom: number
+    left: number
+    right: number
+  } {
+    const p = this.defaultMapPadding
+    p.top += this.additionalTopMapPadding.value
+    if (this.mapMode === MapMode.navigateRoute) {
+      p.top += window.innerHeight / 2
+    }
+    p.bottom += this.additionalBottomMapPadding.value
+    return p
   }
 
   constructor() {
@@ -66,6 +100,7 @@ export class MapViewComponent implements OnInit {
       style: 'mapbox://styles/mapbox/streets-v11',
       zoom: Constants.MAP_INITIAL_ZOOM,
       center: Constants.MAP_INITIAL_LON_LAT,
+      padding: this.defaultMapPadding,
     })
 
     this.map.on('load', () => {
@@ -87,24 +122,22 @@ export class MapViewComponent implements OnInit {
         'click',
         [MapSource.playgrounds, MapSource.privatePlaygrounds],
         async (e) => {
+          if (!this.isMapInteractionEnabled.value) return
+          const feature = e.features[0]
+          if (!feature) return
+          await this.openPlaygroundDetails(feature.properties.id)
           this.map.flyTo({
-            center: e.features[0].geometry.coordinates,
+            center: feature.geometry.coordinates,
             zoom: 17,
             speed: 0.75,
-            padding: {
-              top: 0,
-              bottom: this.verticalSheetPadding,
-              left: 0,
-              right: 0,
-            },
           })
-          this.openPlaygroundDetails(e.features[0].properties.id)
         }
       )
       this.map.on(
         'mouseenter',
         [MapSource.playgrounds, MapSource.privatePlaygrounds],
         () => {
+          if (!this.isMapInteractionEnabled.value) return
           this.map.getCanvas().style.cursor = 'pointer'
         }
       )
@@ -112,9 +145,16 @@ export class MapViewComponent implements OnInit {
         'mouseleave',
         [MapSource.playgrounds, MapSource.privatePlaygrounds],
         () => {
+          if (!this.isMapInteractionEnabled.value) return
           this.map.getCanvas().style.cursor = ''
         }
       )
+      this.map.on('flystart', function () {
+        this.isMapFlying = true
+      })
+      this.map.on('flyend', function () {
+        this.isMapFlying = false
+      })
 
       // positional marker
       const marker = new MapboxGl.Marker({
@@ -133,14 +173,17 @@ export class MapViewComponent implements OnInit {
         }
       })
       marker.on('drag', () => {
+        if (!this.isMapInteractionEnabled.value) return
         const lngLat = marker.getLngLat()
         this.addPinRadius([lngLat.lng, lngLat.lat])
       })
       marker.on('dragend', () => {
+        if (!this.isMapInteractionEnabled.value) return
         const lngLat = marker.getLngLat()
         this.movedMarker([lngLat.lng, lngLat.lat])
       })
       this.map.on('click', async (e) => {
+        if (!this.isMapInteractionEnabled.value) return
         if (!this.showMarker.value) return
         let f = this.map.queryRenderedFeatures(e.point, {
           layers: [MapSource.playgrounds, MapSource.privatePlaygrounds],
@@ -154,15 +197,55 @@ export class MapViewComponent implements OnInit {
     })
 
     this.userPosition.subscribe((p) => {
-      if (p && this.mapMode === MapMode.userLocation) {
-        this.updateUI()
+      if (p) {
+        if (this.markerMode === MarkerMode.userLocation) {
+          this.updateUI()
+          if (this.mapMode === MapMode.navigateRoute && !this.isMapFlying) {
+            this.followUserLocation()
+          }
+        }
       }
     })
 
     this.userHeading.subscribe((h) => {
-      if (h && this.mapMode === MapMode.userLocation) {
-        this.addUserLocationToMap()
+      if (h) {
+        if (
+          this.previousUserHeading &&
+          Math.abs(h - this.previousUserHeading) < 1
+        ) {
+          return
+        }
+        this.previousUserHeading = h
+        if (this.markerMode === MarkerMode.userLocation) {
+          this.addUserLocationToMap()
+          if (this.mapMode === MapMode.navigateRoute && !this.isMapFlying) {
+            this.followUserLocation()
+          }
+        }
       }
+    })
+
+    this.shouldFollowUserLocation.subscribe((f) => {
+      if (f) {
+        this.followUserLocation()
+      } else if (this.currentRoute) {
+        this.zoomToRoute()
+      }
+    })
+
+    this.isMapInteractionEnabled.subscribe((m) => {
+      if (m) {
+        MapViewComponent.MAP_HANDLERS.forEach((h) => this.map[h].enable())
+      } else {
+        MapViewComponent.MAP_HANDLERS.forEach((h) => this.map[h].disable())
+      }
+    })
+
+    this.additionalTopMapPadding.subscribe(() => {
+      this.map.setPadding(this.mapPadding)
+    })
+    this.additionalBottomMapPadding.subscribe(() => {
+      this.map.setPadding(this.mapPadding)
     })
   }
 
@@ -173,38 +256,36 @@ export class MapViewComponent implements OnInit {
     })
   }
 
-  updateUI() {
-    this.toggleUIMode(this.mapMode)
+  updateMapMode(mode: MapMode) {
+    if (mode !== this.mapMode) {
+      this.mapMode = mode
+      this.updateUI()
+    }
+  }
+  updateMarkerMode(mode: MarkerMode) {
+    if (mode !== this.markerMode) {
+      this.markerMode = mode
+      this.updateUI()
+    }
   }
 
-  toggleUIMode(mode: MapMode) {
-    this.mapMode = mode
-    switch (mode) {
-      case MapMode.userLocation:
-        this.showMarker.next(false)
-        this.addPinRadius()
-        this.addPlaygroundResultToMap()
-        this.addUserLocationToMap()
-        this.removeLayersAndSources([
-          MapSource.route,
-          MapSource.routeStart,
-          MapSource.routeEnd,
-        ])
-        break
-      case MapMode.marker:
-        this.showMarker.next(true)
+  updateUI() {
+    this.map.setPadding(this.mapPadding)
+    switch (this.mapMode) {
+      case MapMode.search:
         this.addPinRadius()
         this.addPlaygroundResultToMap()
         this.removeLayersAndSources([
           MapSource.route,
           MapSource.routeStart,
           MapSource.routeEnd,
-          MapSource.userLocation,
-          MapSource.userLocationHalo,
         ])
+        this.showMarker.next(this.markerMode === MarkerMode.marker)
+        this.isMapInteractionEnabled.next(true)
         this.zoomToPlaygrounds()
         break
       case MapMode.route:
+      case MapMode.navigateRoute:
         this.addRouteToMap()
         this.addRouteIcon(true)
         this.addRouteIcon(false)
@@ -217,7 +298,25 @@ export class MapViewComponent implements OnInit {
           MapSource.playgroundsBoundsOutline,
           MapSource.playgroundsBounds,
         ])
-        this.zoomToRoute()
+        const isNavigating = this.mapMode === MapMode.navigateRoute
+        this.isMapInteractionEnabled.next(!isNavigating)
+        this.shouldFollowUserLocation.next(isNavigating)
+        break
+    }
+    switch (this.markerMode) {
+      case MarkerMode.userLocation:
+        this.showMarker.next(false)
+        this.addPinRadius()
+        this.addUserLocationToMap()
+        break
+      case MarkerMode.marker:
+        this.showMarker.next(true)
+        this.addPinRadius()
+        this.removeLayersAndSources([
+          MapSource.userLocation,
+          MapSource.userLocationHalo,
+        ])
+        this.shouldFollowUserLocation.next(false)
         break
     }
   }
@@ -255,25 +354,30 @@ export class MapViewComponent implements OnInit {
     }
   }
 
+  private followUserLocation() {
+    const position = this.userPosition.value
+    if (position && position.coords) {
+      this.flyTo(
+        [position.coords.longitude, position.coords.latitude],
+        18,
+        50,
+        this.userHeading.value || position.coords.heading
+      )
+    }
+  }
+
   flyTo(
     center: any,
     zoom: number = 18,
     pitch: number = 0,
-    bearing: number = 0,
-    padding: {
-      left: number
-      right: number
-      top: number
-      bottom: number
-    } = undefined
+    bearing: number = undefined
   ) {
     this.map.flyTo({
-      padding: padding ?? this.mapPadding,
       zoom: zoom,
       center: center,
       pitch: pitch,
-      bearing: bearing,
-      essential: true,
+      bearing: bearing || this.map.getBearing(),
+      essential: false,
     })
   }
 
@@ -351,9 +455,9 @@ export class MapViewComponent implements OnInit {
     let markerLngLat: [number, number] = undefined
     if (lngLat) {
       markerLngLat = lngLat
-    } else if (this.mapMode === MapMode.marker) {
-      markerLngLat = markerLngLat
-    } else if (this.mapMode === MapMode.userLocation) {
+    } else if (this.markerMode === MarkerMode.marker) {
+      markerLngLat = this.markerLngLat.value
+    } else if (this.markerMode === MarkerMode.userLocation) {
       const position = this.userPosition.value
       if (position && position.coords) {
         markerLngLat = [position.coords.longitude, position.coords.latitude]
@@ -500,30 +604,22 @@ export class MapViewComponent implements OnInit {
   }
 
   private zoomToPlaygrounds() {
-    try {
-      const playgroundsBoundsSource = this.map.getSource(
-        MapSource.playgroundsBounds
-      )
-      if (!playgroundsBoundsSource) return
-      const playgroundBoundsFeatures = playgroundsBoundsSource.getData()
-      const coordinates = playgroundBoundsFeatures.find((f) => {
-        return f.geometry.coordinates.length >= 2
-      }).geometry.coordinates
-      const bounds = new MapboxGl.LngLatBounds(coordinates[0], coordinates[1])
-      playgroundBoundsFeatures.forEach((f) => {
-        f.geometry.coordinates.forEach((c) => {
-          bounds.extend(c)
-        })
-      })
-      this.map.fitBounds(bounds, {
-        padding: this.mapPadding,
-      })
-    } catch (e) {}
+    if (!this.currentPlaygroundResult) return
+    const coords = [
+      this.currentPlaygroundResult.lon,
+      this.currentPlaygroundResult.lat,
+    ]
+    const rangeCircle = Turf.circle(
+      coords,
+      this.currentPlaygroundResult.radiusMeters * 1.1,
+      { units: 'meters' }
+    )
+    this.map.fitBounds(Turf.bbox(rangeCircle))
   }
 
   addRoute(route: any) {
     this.currentRoute = route
-    this.toggleUIMode(MapMode.route)
+    this.updateMapMode(MapMode.route)
   }
 
   private async addRouteToMap() {
@@ -540,23 +636,25 @@ export class MapViewComponent implements OnInit {
     if (routeSource) {
       routeSource.setData(geojson)
     }
-    this.map.addLayer({
-      id: MapSource.route,
-      type: 'line',
-      source: {
-        type: 'geojson',
-        data: geojson,
-      },
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': '#3887de',
-        'line-width': 6,
-        'line-opacity': 0.75,
-      },
-    })
+    if (!this.map.getLayer(MapSource.route)) {
+      this.map.addLayer({
+        id: MapSource.route,
+        type: 'line',
+        source: {
+          type: 'geojson',
+          data: geojson,
+        },
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round',
+        },
+        paint: {
+          'line-color': '#3887de',
+          'line-width': 6,
+          'line-opacity': 0.75,
+        },
+      })
+    }
   }
 
   private addRouteIcon(isStartIcon: boolean) {
@@ -597,6 +695,7 @@ export class MapViewComponent implements OnInit {
       source.setData(geojson)
     }
 
+    const alignment = iconSource === MapSource.userLocation ? 'map' : 'auto'
     if (!this.map.getLayer(iconSource)) {
       this.map.addLayer({
         id: iconSource,
@@ -612,6 +711,8 @@ export class MapViewComponent implements OnInit {
           'icon-rotate': ['get', 'rotate'],
           'icon-allow-overlap': true,
           'icon-ignore-placement': true,
+          'icon-pitch-alignment': alignment,
+          'icon-rotation-alignment': alignment,
         },
       })
       // move user location to top
@@ -627,12 +728,8 @@ export class MapViewComponent implements OnInit {
       return bounds.extend(coord)
     }, new MapboxGl.LngLatBounds(route[0], route[1]))
     this.map.fitBounds(bounds, {
-      padding: {
-        top: this.verticalSheetPadding,
-        bottom: 0,
-        left: 0,
-        right: 0,
-      },
+      bearing: 0,
+      pitch: 0,
     })
   }
 
@@ -641,7 +738,7 @@ export class MapViewComponent implements OnInit {
       (p) => p.id === id
     )
     if (playground) {
-      this.parent.openPlaygroundDetails(playground)
+      await this.parent.openPlaygroundDetails(playground)
     }
   }
 }
