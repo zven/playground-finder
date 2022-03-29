@@ -58,8 +58,6 @@ export class MapViewComponent implements OnInit {
   userHeading: BehaviorSubject<number> = new BehaviorSubject<number>(undefined)
   additionalTopMapPadding: BehaviorSubject<number> =
     new BehaviorSubject<number>(0)
-  additionalBottomMapPadding: BehaviorSubject<number> =
-    new BehaviorSubject<number>(0)
 
   get defaultMapPadding(): {
     top: number
@@ -86,7 +84,6 @@ export class MapViewComponent implements OnInit {
     if (this.mapMode === MapMode.navigateRoute) {
       p.top += window.innerHeight / 2
     }
-    p.bottom += this.additionalBottomMapPadding.value
     return p
   }
 
@@ -126,11 +123,6 @@ export class MapViewComponent implements OnInit {
           const feature = e.features[0]
           if (!feature) return
           await this.openPlaygroundDetails(feature.properties.id)
-          this.map.flyTo({
-            center: feature.geometry.coordinates,
-            zoom: 17,
-            speed: 0.75,
-          })
         }
       )
       this.map.on(
@@ -242,9 +234,6 @@ export class MapViewComponent implements OnInit {
     })
 
     this.additionalTopMapPadding.subscribe(() => {
-      this.map.setPadding(this.mapPadding)
-    })
-    this.additionalBottomMapPadding.subscribe(() => {
       this.map.setPadding(this.mapPadding)
     })
   }
@@ -370,14 +359,16 @@ export class MapViewComponent implements OnInit {
     center: any,
     zoom: number = 18,
     pitch: number = 0,
-    bearing: number = undefined
+    bearing: number = 0,
+    padding: any = undefined
   ) {
     this.map.flyTo({
       zoom: zoom,
       center: center,
       pitch: pitch,
       bearing: bearing || this.map.getBearing(),
-      essential: false,
+      padding: padding || this.map.getPadding(),
+      essential: true,
     })
   }
 
@@ -603,7 +594,7 @@ export class MapViewComponent implements OnInit {
     this.zoomToPlaygrounds()
   }
 
-  private zoomToPlaygrounds() {
+  zoomToPlaygrounds() {
     if (!this.currentPlaygroundResult) return
     const coords = [
       this.currentPlaygroundResult.lon,

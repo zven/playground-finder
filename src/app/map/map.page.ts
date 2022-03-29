@@ -232,6 +232,9 @@ export class MapPage implements AfterViewInit {
         },
       })
       modal.onDidDismiss().then(async (data) => {
+        this.mapView.flyTo([playground.lon, playground.lat], 16, 0, 0, {
+          bottom: 0,
+        })
         const directions: Directions = data.data
         if (directions && directions.routes && directions.routes.length) {
           this.currentRouteDirection = directions.routes[0]
@@ -241,12 +244,11 @@ export class MapPage implements AfterViewInit {
           this.mapView.additionalTopMapPadding.next(
             this.directionsModalView.nativeElement.offsetHeight
           )
-        } else {
-          this.mapView.additionalTopMapPadding.next(0)
         }
-        this.mapView.additionalBottomMapPadding.next(0)
       })
-      this.mapView.additionalBottomMapPadding.next(window.innerHeight / 2)
+      this.mapView.flyTo([playground.lon, playground.lat], 17, 45, 0, {
+        bottom: window.innerHeight / 2,
+      })
       await modal.present()
     }
     this.isSearchActive = false
