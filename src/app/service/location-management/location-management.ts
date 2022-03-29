@@ -61,7 +61,7 @@ export namespace LocationOptionType {
         return [0, 1000]
 
       case LocationOptionType.interval:
-        return [0, 3600]
+        return [0, 1800]
       case LocationOptionType.playgrounds:
       case LocationOptionType.navigation:
       case LocationOptionType.addresses:
