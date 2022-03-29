@@ -178,7 +178,7 @@ export class MapPage implements AfterViewInit {
     if (this.isLoadingPlaygrounds || !this.markerLngLat) {
       return
     }
-    this.mapView.updateUI()
+    this.mapView.updateUI(false)
     this.isLoadingPlaygrounds = true
     this.playgroundService.loadPlaygroundWithLatLng(
       this.markerLngLat[1],
@@ -231,19 +231,13 @@ export class MapPage implements AfterViewInit {
           markerLngLat: this.markerLngLat,
         },
       })
-      modal.onDidDismiss().then(async (data) => {
+      modal.onDidDismiss().then((data) => {
         this.mapView.flyTo([playground.lon, playground.lat], 16, 0, 0, {
           bottom: 0,
         })
         const directions: Directions = data.data
         if (directions && directions.routes && directions.routes.length) {
-          this.currentRouteDirection = directions.routes[0]
-          const route = directions.routes[0].geometry.coordinates
-          await this.mapView.addRoute(route)
-          this.currentPlayground = playground
-          this.mapView.additionalTopMapPadding.next(
-            this.directionsModalView.nativeElement.offsetHeight
-          )
+          this.startDirections(directions.routes[0], playground)
         }
       })
       this.mapView.flyTo([playground.lon, playground.lat], 17, 45, 0, {
@@ -280,6 +274,23 @@ export class MapPage implements AfterViewInit {
     await toast.present()
   }
 
+  private startDirections(route: DirectionRoute, playground: Playground) {
+    this.currentRouteDirection = route
+    const routeCoords = route.geometry.coordinates
+    this.mapView.addRoute(routeCoords)
+    this.currentPlayground = playground
+
+    this.locationService.registerListener((location) => {
+      if (!location || !location.coords) return
+      this.mapView.userPosition.next(location)
+    })
+
+    // TODO: this fails
+    this.mapView.additionalTopMapPadding.next(
+      this.directionsModalView.nativeElement.offsetHeight
+    )
+  }
+
   // Click listeners
   async onSearchPlaygroundsClick() {
     await this.loadPlaygrounds()
@@ -306,6 +317,7 @@ export class MapPage implements AfterViewInit {
     this.currentRouteDirection = undefined
     this.isNavigating = false
     this.mapView.updateMapMode(MapMode.search)
+    this.locationService.removeListener()
   }
 
   onNavigateToggle() {
@@ -329,14 +341,24 @@ export class MapPage implements AfterViewInit {
   async onCurrentLocationToggle() {
     this.usesCurrentLocation = !this.usesCurrentLocation
     if (this.usesCurrentLocation) {
-      this.headingService.registerListener((heading) => {
-        this.mapView.userHeading.next(heading)
-      })
+      const canUseLocation = await this.locationService.canUseLocation()
+      if (!canUseLocation) {
+        this.usesCurrentLocation = false
+        return
+      }
       const location = await this.locationService.getCurrentLocation()
-      this.markerLngLat = [location.coords.longitude, location.coords.latitude]
-      this.mapView.userPosition.next(location)
-      this.mapView.updateMarkerMode(MarkerMode.userLocation)
-      this.usesCurrentLocation = true
+      if (location && location.coords) {
+        this.mapView.updateMarkerMode(MarkerMode.userLocation)
+        this.mapView.userPosition.next(location)
+        this.markerLngLat = [
+          location.coords.longitude,
+          location.coords.latitude,
+        ]
+        this.mapView.flyTo(this.markerLngLat)
+        this.headingService.registerListener((heading) => {
+          this.mapView.userHeading.next(heading)
+        })
+      }
     } else {
       this.headingService.removeListener()
       this.mapView.updateMarkerMode(MarkerMode.marker)

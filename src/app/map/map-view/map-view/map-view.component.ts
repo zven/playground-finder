@@ -192,7 +192,7 @@ export class MapViewComponent implements OnInit {
       if (p) {
         if (this.markerMode === MarkerMode.userLocation) {
           this.updateUI()
-          if (this.mapMode === MapMode.navigateRoute && !this.isMapFlying) {
+          if (this.mapMode === MapMode.navigateRoute) {
             this.followUserLocation()
           }
         }
@@ -258,7 +258,7 @@ export class MapViewComponent implements OnInit {
     }
   }
 
-  updateUI() {
+  updateUI(zoomToPlaygroundsIfViable: boolean = false) {
     this.map.setPadding(this.mapPadding)
     switch (this.mapMode) {
       case MapMode.search:
@@ -271,7 +271,7 @@ export class MapViewComponent implements OnInit {
         ])
         this.showMarker.next(this.markerMode === MarkerMode.marker)
         this.isMapInteractionEnabled.next(true)
-        this.zoomToPlaygrounds()
+        if (zoomToPlaygroundsIfViable) this.zoomToPlaygrounds()
         break
       case MapMode.route:
       case MapMode.navigateRoute:
@@ -295,7 +295,7 @@ export class MapViewComponent implements OnInit {
     switch (this.markerMode) {
       case MarkerMode.userLocation:
         this.showMarker.next(false)
-        this.addPinRadius()
+        if (this.mapMode === MapMode.search) this.addPinRadius()
         this.addUserLocationToMap()
         break
       case MarkerMode.marker:
@@ -357,13 +357,13 @@ export class MapViewComponent implements OnInit {
 
   flyTo(
     center: any,
-    zoom: number = 18,
+    zoom: number = undefined,
     pitch: number = 0,
     bearing: number = 0,
     padding: any = undefined
   ) {
     this.map.flyTo({
-      zoom: zoom,
+      zoom: zoom || this.map.getZoom(),
       center: center,
       pitch: pitch,
       bearing: bearing || this.map.getBearing(),

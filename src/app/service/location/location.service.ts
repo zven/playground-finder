@@ -1,107 +1,62 @@
 import { Injectable } from '@angular/core'
 import { Geolocation, Position } from '@capacitor/geolocation'
-import { LocationOptionType } from '../location-management/location-management'
+import { Platform } from '@ionic/angular'
 import { LocationManagementService } from '../location-management/location-management.service'
-import { point } from '@turf/helpers'
-import { randomPoint } from '@turf/random'
-import buffer from '@turf/buffer'
-import bbox from '@turf/bbox'
-import transformTranslate from '@turf/transform-translate'
 
 @Injectable({
   providedIn: 'root',
 })
 export class LocationService {
-  private cachedPosition: Position
+  private callbackID: string = undefined
 
-  constructor(private locationManagementService: LocationManagementService) {}
+  constructor(
+    private locationManagementService: LocationManagementService,
+    private platform: Platform
+  ) {}
 
-  private async shouldUseCachedPosition(): Promise<boolean> {
-    const locationInterval = (
-      await this.locationManagementService.loadLocationOption(
-        LocationOptionType.interval
-      )
-    ).value
-    if (this.cachedPosition && this.cachedPosition.coords) {
-      const timestamp = Date.now() / 1000
-      return timestamp - this.cachedPosition.timestamp < locationInterval
-    }
-    return false
-  }
-
-  private async filterPositionWithAccuracy(
-    position: Position
-  ): Promise<Position> {
-    const locationAccuracy = (
-      await this.locationManagementService.loadLocationOption(
-        LocationOptionType.accuracy
-      )
-    ).value
-    if (!position || !position.coords) {
-      return undefined
-    } else if (
-      position.coords.accuracy &&
-      position.coords.accuracy > locationAccuracy
-    ) {
-      // original accuracy already fits
-      return position
-    }
-    // calculate buffer around requested location
-    const positionBuffer = buffer(
-      point([position.coords.longitude, position.coords.latitude]),
-      locationAccuracy,
-      {
-        units: 'meters',
-      }
-    )
-
-    // translating buffer to random distance and direction
-    // + 0.2 so that there is always some offset
-    const randomDistance = Math.floor((Math.random() + 0.2) * locationAccuracy)
-    const randomDirection = Math.floor(Math.random() * 360)
-    const translatedBuffer = transformTranslate(
-      positionBuffer,
-      randomDistance,
-      randomDirection,
-      {
-        units: 'meters',
-      }
-    )
-
-    // create bbox from buffer
-    const posBbox = bbox(translatedBuffer)
-
-    // generate random points in bbox
-    const randomPoints = randomPoint(1, { bbox: posBbox })
-    const randomPointCoord = randomPoints[0].geometry.coordinates
-    position.coords.latitude = randomPointCoord[1]
-    position.coords.longitude = randomPointCoord[0]
-    position.coords.accuracy = locationAccuracy
-
-    return position
-  }
-
-  private async checkForPermissions() {
+  async canUseLocation(): Promise<Boolean> {
     try {
-      await Geolocation.requestPermissions()
-    } catch (e) {}
+      var status = await Geolocation.checkPermissions()
+      if (status.location === 'prompt' || status.coarseLocation === 'prompt') {
+        status = await Geolocation.requestPermissions()
+      }
+      return (
+        status.location === 'granted' || status.coarseLocation === 'granted'
+      )
+    } catch (e) {
+      const isApp = this.platform.is('android') || this.platform.is('ios')
+      return !isApp
+    }
+  }
+
+  async registerListener(callback: (location: Position) => void) {
+    if (this.callbackID) return
+    this.callbackID = await Geolocation.watchPosition(
+      {
+        enableHighAccuracy: true,
+      },
+      async (position: Position | null, err?: any) => {
+        const processedPosition =
+          await this.locationManagementService.processLocation(position)
+        if (processedPosition) {
+          callback(processedPosition)
+        }
+      }
+    )
   }
 
   async getCurrentLocation(): Promise<Position> {
-    try {
-      await this.checkForPermissions()
-      if (await this.shouldUseCachedPosition()) {
-        // return cached position if eligible
-        return this.filterPositionWithAccuracy(this.cachedPosition)
-      }
+    if (this.canUseLocation()) {
       const position = await Geolocation.getCurrentPosition()
-      if (position) {
-        this.cachedPosition = await this.filterPositionWithAccuracy(position)
-        return this.cachedPosition
-      }
-      return undefined
-    } catch (e) {
-      return undefined
+      return await this.locationManagementService.processLocation(position)
     }
+    return undefined
+  }
+
+  // Remove all listeners
+  removeListener() {
+    if (!this.callbackID) return
+    Geolocation.clearWatch({ id: this.callbackID })
+    this.callbackID = undefined
   }
 }
