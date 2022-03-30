@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http'
 import { Injectable } from '@angular/core'
-import { Constants } from 'src/app/utils/constants'
+import { environment } from 'src/environments/environment'
 import { Directions, DirectionsCode } from './direction'
 
 @Injectable({
@@ -9,7 +9,7 @@ import { Directions, DirectionsCode } from './direction'
 export class DirectionService {
   private static API_BASE_URL = 'https://api.mapbox.com/directions/v5/'
   private static API_WALKING_PROFILE = 'mapbox/walking'
-  private static API_TOKEN_PARAM = `access_token=${Constants.MAPBOX_TOKEN}`
+  private static API_TOKEN_PARAM = `access_token=${environment.mapbox.token}`
   private static API_GEOM_GEOJSON_PARAM = 'geometries=geojson'
   private static API_TBT_PARAM = 'steps=true'
   private static API_LANG_PARAM = 'language=en'

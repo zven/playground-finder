@@ -10,6 +10,7 @@ import { Position } from '@capacitor/geolocation'
 import * as mapboxGl from 'mapbox-gl'
 import * as turf from '@turf/turf'
 import { BehaviorSubject } from 'rxjs'
+import { environment } from 'src/environments/environment'
 
 @Component({
   selector: 'app-map-view',
@@ -88,7 +89,7 @@ export class MapViewComponent implements OnInit {
   }
 
   constructor() {
-    mapboxGl.accessToken = Constants.MAPBOX_TOKEN
+    mapboxGl.accessToken = environment.mapbox.token
   }
 
   ngOnInit() {
