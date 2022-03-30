@@ -1,0 +1,6 @@
+{
+	"appId": "de.fh.muenster.simport.playgrounds",
+	"appName": "Playground Finder",
+	"webDir": "www",
+	"bundledWebRuntime": false
+}

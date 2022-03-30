@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Playground Finder</string>
+    <string name="title_activity_main">Playground Finder</string>
+    <string name="package_name">de.fh.muenster.simport.playgrounds</string>
+    <string name="custom_url_scheme">de.fh.muenster.simport.playgrounds</string>
+</resources>

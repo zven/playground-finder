@@ -1,6 +1,6 @@
 {
-	"appId": "io.ionic.starter",
-	"appName": "Playground Finder",
-	"webDir": "www",
-	"bundledWebRuntime": false
+  "appId": "de.fh.muenster.simport.playgrounds",
+  "appName": "Playground Finder",
+  "webDir": "www",
+  "bundledWebRuntime": false
 }

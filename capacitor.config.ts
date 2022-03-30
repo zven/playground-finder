@@ -1,10 +1,10 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
+  appId: 'de.fh.muenster.simport.playgrounds',
   appName: 'Playground Finder',
   webDir: 'www',
-  bundledWebRuntime: false
-};
+  bundledWebRuntime: false,
+}
 
-export default config;
+export default config
