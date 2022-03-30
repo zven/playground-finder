@@ -7,8 +7,8 @@ import { MapIcon, MapMode, MapSource, MarkerMode } from './map'
 import { Constants } from 'src/app/utils/constants'
 import { Position } from '@capacitor/geolocation'
 
-import * as MapboxGl from 'mapbox-gl'
-import * as Turf from '@turf/turf'
+import * as mapboxGl from 'mapbox-gl'
+import * as turf from '@turf/turf'
 import { BehaviorSubject } from 'rxjs'
 
 @Component({
@@ -28,7 +28,7 @@ export class MapViewComponent implements OnInit {
   ]
   private static MAP_PADDING = 50
 
-  private map: MapboxGl.Map
+  private map: mapboxGl.Map
   private previousUserHeading: number = 0
 
   @Input() searchRadius: number
@@ -88,16 +88,15 @@ export class MapViewComponent implements OnInit {
   }
 
   constructor() {
-    MapboxGl.accessToken = Constants.MAPBOX_TOKEN
+    mapboxGl.accessToken = Constants.MAPBOX_TOKEN
   }
 
   ngOnInit() {
-    this.map = new MapboxGl.Map({
+    this.map = new mapboxGl.Map({
       container: 'mapbox',
       style: 'mapbox://styles/mapbox/streets-v11',
       zoom: Constants.MAP_INITIAL_ZOOM,
       center: Constants.MAP_INITIAL_LON_LAT,
-      padding: this.defaultMapPadding,
     })
 
     this.map.on('load', () => {
@@ -149,7 +148,7 @@ export class MapViewComponent implements OnInit {
       })
 
       // positional marker
-      const marker = new MapboxGl.Marker({
+      const marker = new mapboxGl.Marker({
         draggable: true,
         color: '#FFBB01',
       }).setLngLat(this.markerLngLat.value)
@@ -398,8 +397,8 @@ export class MapViewComponent implements OnInit {
     ) {
       this.map.removeLayer(MapSource.userLocationHalo)
     }
-    const haloData = Turf.circle(
-      Turf.point([position.coords.longitude, position.coords.latitude]),
+    const haloData = turf.circle(
+      turf.point([position.coords.longitude, position.coords.latitude]),
       position.coords.accuracy,
       {
         steps: 64,
@@ -457,8 +456,8 @@ export class MapViewComponent implements OnInit {
     if (!markerLngLat) {
       return
     }
-    const radiusData = Turf.circle(
-      Turf.point(markerLngLat),
+    const radiusData = turf.circle(
+      turf.point(markerLngLat),
       (this.searchRadius / 1000) * 1.1,
       {
         steps: 64,
@@ -600,12 +599,12 @@ export class MapViewComponent implements OnInit {
       this.currentPlaygroundResult.lon,
       this.currentPlaygroundResult.lat,
     ]
-    const rangeCircle = Turf.circle(
+    const rangeCircle = turf.circle(
       coords,
       this.currentPlaygroundResult.radiusMeters * 1.1,
       { units: 'meters' }
     )
-    this.map.fitBounds(Turf.bbox(rangeCircle))
+    this.map.fitBounds(turf.bbox(rangeCircle))
   }
 
   addRoute(route: any) {
@@ -717,7 +716,7 @@ export class MapViewComponent implements OnInit {
     if (!route) return
     var bounds = route.reduce(function (bounds, coord) {
       return bounds.extend(coord)
-    }, new MapboxGl.LngLatBounds(route[0], route[1]))
+    }, new mapboxGl.LngLatBounds(route[0], route[1]))
     this.map.fitBounds(bounds, {
       bearing: 0,
       pitch: 0,
