@@ -125,7 +125,7 @@ export class MapPage implements AfterViewInit {
     return []
   }
 
-  currentMarkerString(): string {
+  get currentMarkerString(): string {
     if (this.markerAddress) {
       return this.markerAddress
     }
@@ -137,7 +137,7 @@ export class MapPage implements AfterViewInit {
     return ''
   }
 
-  ngAfterViewInit() {
+  async ngAfterViewInit() {
     this.mapView.markerLngLat.subscribe(() => {
       this.runGeocoding()
       this.invalidateSearchParams()
@@ -148,6 +148,8 @@ export class MapPage implements AfterViewInit {
       this.searchRadius = cachedResult.radiusMeters
       this.mapView.addResult(cachedResult)
     }
+    // enable user location, if available
+    await this.toggleUserLocation(false)
   }
 
   ionViewDidEnter() {
@@ -285,10 +287,39 @@ export class MapPage implements AfterViewInit {
       this.mapView.userPosition.next(location)
     })
 
-    // TODO: this fails
-    this.mapView.additionalTopMapPadding.next(
-      this.directionsModalView.nativeElement.offsetHeight
-    )
+    const offset = this.directionsModalView.nativeElement
+      ? this.directionsModalView.nativeElement.offsetHeight
+      : 150
+    this.mapView.additionalTopMapPadding.next(offset)
+  }
+
+  private async toggleUserLocation(requestPermission: boolean) {
+    this.usesCurrentLocation = !this.usesCurrentLocation
+    if (this.usesCurrentLocation) {
+      const canUseLocation = await this.locationService.canUseLocation(
+        requestPermission
+      )
+      if (!canUseLocation) {
+        this.usesCurrentLocation = false
+        return
+      }
+      const location = await this.locationService.getCurrentLocation()
+      if (location && location.coords) {
+        this.mapView.updateMarkerMode(MarkerMode.userLocation)
+        this.mapView.userPosition.next(location)
+        this.markerLngLat = [
+          location.coords.longitude,
+          location.coords.latitude,
+        ]
+        this.mapView.flyTo(this.markerLngLat)
+        this.headingService.registerListener((heading) => {
+          this.mapView.userHeading.next(heading)
+        })
+      }
+    } else {
+      this.headingService.removeListener()
+      this.mapView.updateMarkerMode(MarkerMode.marker)
+    }
   }
 
   // Click listeners
@@ -339,30 +370,6 @@ export class MapPage implements AfterViewInit {
   }
 
   async onCurrentLocationToggle() {
-    this.usesCurrentLocation = !this.usesCurrentLocation
-    if (this.usesCurrentLocation) {
-      const canUseLocation = await this.locationService.canUseLocation()
-      if (!canUseLocation) {
-        this.usesCurrentLocation = false
-        return
-      }
-      const location = await this.locationService.getCurrentLocation()
-      if (location && location.coords) {
-        this.mapView.updateMarkerMode(MarkerMode.userLocation)
-        this.mapView.userPosition.next(location)
-        this.markerLngLat = [
-          location.coords.longitude,
-          location.coords.latitude,
-        ]
-        this.mapView.flyTo(this.markerLngLat)
-        this.headingService.registerListener((heading) => {
-          this.mapView.userHeading.next(heading)
-        })
-      }
-    } else {
-      this.headingService.removeListener()
-      this.mapView.updateMarkerMode(MarkerMode.marker)
-    }
-    this.invalidateSearchParams()
+    await this.toggleUserLocation(true)
   }
 }

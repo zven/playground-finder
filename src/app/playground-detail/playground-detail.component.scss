@@ -50,6 +50,10 @@ ion-avatar {
   }
 }
 
+ion-list {
+  background-color: transparent;
+}
+
 ion-item {
   --padding-start: 0;
   --padding-end: 0;
@@ -70,4 +74,5 @@ ion-item {
   ion-spinner {
     vertical-align: baseline;
   }
+  --background: transparent;
 }

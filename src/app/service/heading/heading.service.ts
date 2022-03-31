@@ -33,7 +33,9 @@ export class HeadingService {
 
   // Remove all listeners
   removeListener() {
-    this.subscription.unsubscribe()
-    this.subscription = undefined
+    if (this.subscription) {
+      this.subscription.unsubscribe()
+      this.subscription = undefined
+    }
   }
 }

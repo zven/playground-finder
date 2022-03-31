@@ -14,10 +14,13 @@ export class LocationService {
     private platform: Platform
   ) {}
 
-  async canUseLocation(): Promise<Boolean> {
+  async canUseLocation(requestPermission: boolean = false): Promise<Boolean> {
     try {
       var status = await Geolocation.checkPermissions()
-      if (status.location === 'prompt' || status.coarseLocation === 'prompt') {
+      if (
+        requestPermission &&
+        (status.location === 'prompt' || status.coarseLocation === 'prompt')
+      ) {
         status = await Geolocation.requestPermissions()
       }
       return (
