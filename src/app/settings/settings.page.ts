@@ -3,6 +3,8 @@ import { IonRouterOutlet, ModalController } from '@ionic/angular'
 import {
   LocationOption,
   LocationOptionType,
+  LocationPrivacyLevel,
+  LocationQualityLevel,
 } from '../service/location-management/location-management'
 import { LocationManagementService } from '../service/location-management/location-management.service'
 import { SettingsDetailComponent } from './settings-detail/settings-detail/settings-detail.component'
@@ -25,6 +27,40 @@ export class SettingsPage {
     })
   }
 
+  get currentPrivacyLevel(): LocationPrivacyLevel {
+    return LocationOption.combinedPrivacyLevel(this.locationOptions)
+  }
+
+  get currentQualityLevel(): LocationQualityLevel {
+    return LocationOption.combinedQualityLevel(this.locationOptions)
+  }
+
+  get privacyRatingCssClass(): string {
+    switch (Math.floor(this.currentPrivacyLevel)) {
+      case LocationPrivacyLevel.high:
+        return 'icon-high'
+      case LocationPrivacyLevel.mediumHigh:
+        return 'icon-medium-high'
+      case LocationPrivacyLevel.mediumLow:
+        return 'icon-medium-low'
+      case LocationPrivacyLevel.low:
+        return 'icon-low'
+    }
+  }
+
+  get qualityRatingCssClass(): string {
+    switch (Math.floor(this.currentQualityLevel)) {
+      case LocationQualityLevel.high:
+        return 'icon-high'
+      case LocationQualityLevel.mediumHigh:
+        return 'icon-medium-high'
+      case LocationQualityLevel.mediumLow:
+        return 'icon-medium-low'
+      case LocationQualityLevel.low:
+        return 'icon-low'
+    }
+  }
+
   getTitle(type: LocationOptionType): string {
     return LocationOptionType.title(type)
   }
@@ -37,6 +73,10 @@ export class SettingsPage {
     return LocationOptionType.description(type)
   }
 
+  getOptionDescription(type: LocationOptionType): string {
+    return LocationOptionType.optionDescription(type)
+  }
+
   getIcon(type: LocationOptionType): string {
     return LocationOptionType.icon(type)
   }
@@ -45,8 +85,8 @@ export class SettingsPage {
     return LocationOptionType.dataType(type)
   }
 
-  getRange(type: LocationOptionType): [number, number] {
-    return LocationOptionType.range(type)
+  getSteps(type: LocationOptionType): number[] {
+    return LocationOptionType.steps(type)
   }
 
   getValueLabel(option: LocationOption): string {
@@ -55,49 +95,79 @@ export class SettingsPage {
     }
     switch (option.type) {
       case LocationOptionType.accuracy:
-        if (option.value <= 0) {
-          return 'Unlimited'
-        } else if (option.value < 1000) {
-          return `${option.value.toFixed(0)}m`
-        }
-        return `${(option.value / 1000).toFixed(0)}km`
       case LocationOptionType.interval:
-        if (option.value <= 0) {
-          return 'Unlimited'
-        } else if (option.value < 60) {
-          return `${option.value.toFixed(0)}s`
-        } else if (option.value >= 60 && option.value < 600) {
-          const mins = Math.floor(option.value / 60)
-          const secs = (option.value / 60 - mins) * 60
-          const secsString = `${secs.toFixed(0)}`
-          const leadingZeroForSecs = secsString.length < 2 ? '0' : ''
-          return `${mins}:${leadingZeroForSecs}${secsString}min`
-        } else if (option.value >= 600 && option.value < 3600) {
-          return `${Math.floor(option.value / 60)}min`
-        }
-        return `${(option.value / 60 / 60).toFixed(0)}h`
-      default:
-        return ''
+        return LocationOptionType.stepLabels(option.type)[option.value]
     }
+    return ''
   }
 
-  async showDetails(type: LocationOptionType) {
+  async showLocationOptionDetails(type: LocationOptionType) {
+    await this.showDetails(
+      this.getTitle(type),
+      this.getSubtitle(type),
+      this.getDescription(type),
+      this.getOptionDescription(type),
+      this.getIcon(type)
+    )
+  }
+
+  private async showRatingDetails(
+    baseString: string,
+    icon: string,
+    iconClass?: string
+  ) {
+    await this.showDetails(
+      `location-option.rating.${baseString}.title`,
+      `location-option.rating.${baseString}.subtitle`,
+      `location-option.rating.${baseString}.description`,
+      `location-option.rating.${baseString}.detailDescription`,
+      icon,
+      iconClass
+    )
+  }
+
+  private async showDetails(
+    title: string,
+    subtitle: string,
+    description: string,
+    detailDescription: string,
+    icon: string,
+    iconClass?: string
+  ) {
     const modal = await this.modalController.create({
       component: SettingsDetailComponent,
       presentingElement: this.routerOutlet.nativeEl,
       swipeToClose: true,
       cssClass: 'auto-height',
       componentProps: {
-        title: this.getTitle(type),
-        subtitle: this.getSubtitle(type),
-        description: this.getDescription(type),
-        icon: this.getIcon(type),
+        title,
+        subtitle,
+        description,
+        detailDescription,
+        icon,
+        iconClass,
       },
     })
-    modal.present()
+    await modal.present()
   }
 
   onOptionChange() {
     this.locationManagementService.locationOptions.next(this.locationOptions)
+  }
+
+  async onPrivacyRatingDetailsClick() {
+    await this.showRatingDetails(
+      'privacy',
+      'shield',
+      this.privacyRatingCssClass
+    )
+  }
+
+  async onQualityRatingDetailsClick() {
+    await this.showRatingDetails(
+      'quality',
+      'diamond',
+      this.qualityRatingCssClass
+    )
   }
 }

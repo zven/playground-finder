@@ -31,10 +31,6 @@ export class LocationManagementService {
         value: false,
       },
       {
-        type: LocationOptionType.addresses,
-        value: false,
-      },
-      {
         type: LocationOptionType.accuracy,
         value: 0,
       },

@@ -1,13 +1,29 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title> Settings </ion-title>
+    <ion-title> Privacy settings </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="onQualityRatingDetailsClick()">
+        <ion-icon
+          [ngClass]="qualityRatingCssClass"
+          slot="icon-only"
+          name="diamond"
+        ></ion-icon
+      ></ion-button>
+      <ion-button (click)="onPrivacyRatingDetailsClick()">
+        <ion-icon
+          [ngClass]="privacyRatingCssClass"
+          slot="icon-only"
+          name="shield"
+        ></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Settings</ion-title>
+      <ion-title size="large">Privacy settings</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -23,17 +39,18 @@
           <ion-icon [name]="getIcon(option.type)"></ion-icon>
         </ion-avatar>
         <ion-label>
-          <h3 (click)="showDetails(option.type)">
+          <h3 (click)="showLocationOptionDetails(option.type)">
             {{ getTitle(option.type) | translate }}
             <ion-icon id="help-icon" name="help-circle-outline"></ion-icon>
           </h3>
           <p>{{ getSubtitle(option.type) | translate }}</p>
           <ion-range
             *ngIf="getType(option.type) === 'number'"
-            [min]="getRange(option.type)[0]"
-            [max]="getRange(option.type)[1]"
-            step="10"
-            ticks="false"
+            [min]="0"
+            [max]="getSteps(option.type).length - 1"
+            step="1"
+            ticks="true"
+            snaps="true"
             [(ngModel)]="option.value"
             (ionChange)="onOptionChange()"
           >

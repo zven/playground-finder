@@ -10,7 +10,9 @@ export class SettingsDetailComponent {
   @Input() title: string
   @Input() subtitle: string
   @Input() description: string
+  @Input() detailDescription: string
   @Input() icon: string
+  @Input() iconClass?: string
 
   constructor(private modalController: ModalController) {}
 
