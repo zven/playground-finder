@@ -30,3 +30,7 @@ npm-debug.log*
 /platforms
 /plugins
 /www
+
+# environments contain tokens
+./src/environments/environment.prod.ts
+./src/environments/environment.ts

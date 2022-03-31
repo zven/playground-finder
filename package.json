@@ -7,11 +7,12 @@
     "ng": "ng",
     "start": "ng serve",
     "config": "ts-node -O '{\"module\": \"commonjs\"}' ./src/config.index.ts",
-    "build": "npm run config && ng build --prod",
+    "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "resources": "capacitor-resources -p android,ios"
+    "resources": "capacitor-resources -p android,ios",
+    "postinstall": "npm run config"
   },
   "private": true,
   "dependencies": {
