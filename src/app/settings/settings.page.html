@@ -2,14 +2,24 @@
   <ion-toolbar>
     <ion-title> Privacy settings </ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="onQualityRatingDetailsClick()">
+      <ion-button
+        shape="round"
+        fill="solid"
+        color="light"
+        (click)="onQualityRatingDetailsClick()"
+      >
         <ion-icon
           [ngClass]="qualityRatingCssClass"
           slot="icon-only"
           name="diamond"
         ></ion-icon
       ></ion-button>
-      <ion-button (click)="onPrivacyRatingDetailsClick()">
+      <ion-button
+        shape="round"
+        fill="solid"
+        color="light"
+        (click)="onPrivacyRatingDetailsClick()"
+      >
         <ion-icon
           [ngClass]="privacyRatingCssClass"
           slot="icon-only"

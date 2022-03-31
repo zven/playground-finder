@@ -63,7 +63,7 @@ export namespace LocationOptionType {
   }
 
   export function optionDescription(type: LocationOptionType): string {
-    return `location-option.${type}.optionDescription`
+    return `location-option.${type}.detailDescription`
   }
 
   export function icon(type: LocationOptionType): string {

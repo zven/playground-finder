@@ -12,6 +12,14 @@ ion-avatar {
   }
 }
 
+ion-toolbar {
+  ion-button {
+    margin: 0.25em;
+    --padding-start: 1em;
+    --padding-end: 1em;
+  }
+}
+
 ion-item {
   --padding-start: 0.75em;
 }
