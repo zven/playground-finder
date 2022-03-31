@@ -40,13 +40,13 @@
         "title": "Privacy",
         "subtitle": "How do your preferences affect your privacy?",
         "description": "You have the ability to choose, which location data you want to share how. This has immediate effects on your personal privacy.",
-        "detailDescription": "<b class='icon-high'>high</b> best privacy, no vulnerable data is shared.<br><b>medium-high</b> moderate privacy, little vulnerable data is shared.<br><b>medium-low</b> low privacy, some vulnerable data is shared.<br><b>high</b> worst privacy, all vulnerable data is shared."
+        "detailDescription": "<b class='icon-high'>high</b> best privacy, no vulnerable data is shared.<br><b>medium-high</b> moderate privacy, little vulnerable data is shared.<br><b>medium-low</b> low privacy, some vulnerable data is shared.<br><b>low</b> worst privacy, all vulnerable data is shared."
       },
       "quality": {
         "title": "Service quality",
         "subtitle": "How do your preferences affect the service quality?",
         "description": "You have the ability to choose, which location data you want to share how. This has immediate effects on the quality of service our app can offer.",
-        "detailDescription": "<b>high</b> best service quality, all features working as intended.<br><b>medium-high</b> moderate service quality, most features nearly working as intended.<br><b>medium-low</b> low service quality, features working with reduced functionality.<br><b>high</b> worst service quality, features not working as intended."
+        "detailDescription": "<b>high</b> best service quality, all features working as intended.<br><b>medium-high</b> moderate service quality, most features nearly working as intended.<br><b>medium-low</b> low service quality, features working with reduced functionality.<br><b>low</b> worst service quality, features not working as intended."
       }
     }
   }
