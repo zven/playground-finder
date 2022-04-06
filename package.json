@@ -11,7 +11,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "resources": "capacitor-resources -p android,ios",
+    "resources:ios": "capacitor-resources -i ./resources/icon_ios.png -I -p ios",
+    "resources:android": "capacitor-resources -i ./resources/icon_android.png -I -p android",
     "postinstall": "npm run config"
   },
   "private": true,
