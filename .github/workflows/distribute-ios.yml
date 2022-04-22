@@ -35,6 +35,8 @@ jobs:
           npm install --silent
           npm run config
           ionic cap build ios --no-interactive --no-open --confirm --prod
+        env:
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
 
       - name: Bump version
         run: |
