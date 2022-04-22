@@ -16,6 +16,12 @@
   box-shadow: 0px 1px 16px rgba(0, 0, 0, 0.3);
   border-radius: 16px;
   backdrop-filter: blur(4px);
+  a {
+    ion-icon {
+      vertical-align: middle;
+      margin-bottom: 0.25em;
+    }
+  }
 }
 
 @media (prefers-color-scheme: light) {

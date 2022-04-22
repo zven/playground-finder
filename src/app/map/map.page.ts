@@ -293,7 +293,7 @@ export class MapPage implements AfterViewInit {
     this.mapView.additionalTopMapPadding.next(offset)
   }
 
-  private async toggleUserLocation(requestPermission: boolean) {
+  private async toggleUserLocation(requestPermission: Boolean) {
     this.usesCurrentLocation = !this.usesCurrentLocation
     if (this.usesCurrentLocation) {
       const canUseLocation = await this.locationService.canUseLocation(

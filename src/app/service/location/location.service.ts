@@ -1,5 +1,10 @@
 import { Injectable } from '@angular/core'
-import { Geolocation, Position } from '@capacitor/geolocation'
+import {
+  Geolocation,
+  Position,
+  PermissionStatus,
+  GeolocationPluginPermissions,
+} from '@capacitor/geolocation'
 import { Platform } from '@ionic/angular'
 import { LocationOptionType } from '../location-management/location-management'
 import { LocationManagementService } from '../location-management/location-management.service'
@@ -28,7 +33,7 @@ export class LocationService {
     )
   }
 
-  async canUseLocation(requestPermission: boolean = false): Promise<Boolean> {
+  async canUseLocation(requestPermission: Boolean = false): Promise<Boolean> {
     if (
       (
         await this.locationManagementService.loadLocationOption(
@@ -40,7 +45,7 @@ export class LocationService {
         var status = await Geolocation.checkPermissions()
         if (
           requestPermission &&
-          (status.location === 'prompt' || status.coarseLocation === 'prompt')
+          this.needsLocationAccessRequestForStatus(status)
         ) {
           status = await Geolocation.requestPermissions()
         }
@@ -53,6 +58,37 @@ export class LocationService {
       }
     }
     return false
+  }
+
+  async needsLocationAccessRequest(): Promise<Boolean> {
+    const status = await Geolocation.checkPermissions()
+    return this.needsLocationAccessRequestForStatus(status)
+  }
+
+  async requestLocationAccess(): Promise<Boolean> {
+    try {
+      const permissions: GeolocationPluginPermissions = {
+        permissions: ['location', 'coarseLocation'],
+      }
+      const status = await Geolocation.requestPermissions(permissions)
+      return (
+        status.location === 'granted' || status.coarseLocation === 'granted'
+      )
+    } catch (e) {
+      const isApp = this.platform.is('android') || this.platform.is('ios')
+      return !isApp
+    }
+  }
+
+  private needsLocationAccessRequestForStatus(
+    status: PermissionStatus
+  ): Boolean {
+    return (
+      status.location === 'prompt' ||
+      status.location === 'prompt-with-rationale' ||
+      status.coarseLocation === 'prompt' ||
+      status.coarseLocation === 'prompt-with-rationale'
+    )
   }
 
   async registerListener(callback: (location: Position) => void) {

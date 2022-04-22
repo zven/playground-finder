@@ -1,3 +1,70 @@
 <ion-app>
   <ion-router-outlet></ion-router-outlet>
+  <div *ngIf="showIntroduction" class="swiper-backdrop"></div>
+  <swiper
+    *ngIf="showIntroduction"
+    [navigation]="true"
+    [pagination]="{
+      dynamicBullets: true
+    }"
+  >
+    <ng-template swiperSlide>
+      <p>
+        <ion-icon
+          class="title-icon"
+          icon="balloon-outline"
+          color="primary"
+        ></ion-icon
+        ><br /><br />
+        Welcome to <b>Playgrounds</b> – the app to scan your area for the best
+        playgrounds out there!
+      </p>
+    </ng-template>
+    <ng-template swiperSlide>
+      <p>
+        <ion-icon
+          class="title-icon"
+          icon="map-outline"
+          color="primary"
+        ></ion-icon
+        ><br /><br />
+        In order for making your experience super easy, the app has built-in
+        maps that help orient yourself in your immediate surroundings.
+        <br /><br />
+        Explore your area for undiscovered places!
+      </p>
+    </ng-template>
+    <ng-template swiperSlide>
+      <p>
+        <ion-icon
+          class="title-icon"
+          icon="locate-outline"
+          color="primary"
+        ></ion-icon
+        ><br /><br />
+        To make your life finding playgrounds even easier, this app needs to
+        access your location. This helps us to:
+        <br />
+        <br />
+        <li>
+          <ion-icon icon="pin-outline"> </ion-icon> show your location on the
+          map
+        </li>
+        <li>
+          <ion-icon icon="search-outline"> </ion-icon> find playgrounds right
+          around your corner
+        </li>
+        <li>
+          <ion-icon icon="navigate-outline"> </ion-icon> navigate the fastest
+          path to your playground
+        </li>
+        <br />
+        <ion-button (click)="closeIntroduction()">
+          <ion-icon icon="play-outline"></ion-icon>
+          Start
+        </ion-button>
+      </p>
+    </ng-template>
+    <div class="swiper-pagination"></div>
+  </swiper>
 </ion-app>
