@@ -11,26 +11,34 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-list
-    *ngIf="!playgroundResult || playgroundResult.playgrounds.length === 0"
-  >
-    <ion-item *ngFor="let _ of [].constructor(20)">
-      <ion-avatar slot="start">
-        <ion-skeleton-text animated></ion-skeleton-text>
-      </ion-avatar>
-      <ion-label>
-        <h3>
-          <ion-skeleton-text animated style="width: 50%"></ion-skeleton-text>
-        </h3>
-        <p>
-          <ion-skeleton-text animated style="width: 30%"></ion-skeleton-text>
-        </p>
-      </ion-label>
-      <ion-chip slot="end">
-        <ion-skeleton-text animated style="width: 5em"></ion-skeleton-text>
-      </ion-chip>
-    </ion-item>
-  </ion-list>
+  <div *ngIf="!playgroundResult || playgroundResult.playgrounds.length === 0">
+    <ion-list>
+      <ion-item *ngFor="let _ of [].constructor(20)">
+        <ion-avatar slot="start">
+          <ion-skeleton-text animated></ion-skeleton-text>
+        </ion-avatar>
+        <ion-label>
+          <h3>
+            <ion-skeleton-text animated style="width: 50%"></ion-skeleton-text>
+          </h3>
+          <p>
+            <ion-skeleton-text animated style="width: 30%"></ion-skeleton-text>
+          </p>
+        </ion-label>
+        <ion-chip slot="end">
+          <ion-skeleton-text animated style="width: 5em"></ion-skeleton-text>
+        </ion-chip>
+      </ion-item>
+    </ion-list>
+    <div class="noPlaygroundsYet">
+      <ion-icon icon="balloon" size="large"></ion-icon><br /><br />
+      No playgrounds found yet. Go back to the
+      <a [routerLink]="" (click)="showMap()">
+        map <ion-icon icon="map"></ion-icon>
+      </a>
+      and find playgrounds in your area!
+    </div>
+  </div>
 
   <ion-list
     *ngIf="playgroundResult && playgroundResult.playgrounds.length !== 0"

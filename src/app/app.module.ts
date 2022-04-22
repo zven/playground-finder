@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http'
 import { NgModule } from '@angular/core'
 import { BrowserModule } from '@angular/platform-browser'
 import { RouteReuseStrategy } from '@angular/router'
+import { SwiperModule } from 'swiper/angular'
 
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular'
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core'
@@ -32,6 +33,7 @@ export function createTranslateLoader(http: HttpClient) {
         deps: [HttpClient],
       },
     }),
+    SwiperModule,
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
