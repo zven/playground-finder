@@ -54,4 +54,8 @@ export class ListPage implements AfterViewInit {
       state: { center: [playground.lon, playground.lat] },
     })
   }
+
+  showMap() {
+    this.router.navigate([`../${Tab.Map}`], {})
+  }
 }
