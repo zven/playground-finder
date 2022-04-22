@@ -35,6 +35,8 @@ jobs:
           npm install --silent
           npm run config
           ionic cap build android --no-interactive --no-open --confirm --prod
+        env:
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
 
       - name: Setup Android NDK
         uses: nttld/setup-ndk@v1.0.3
