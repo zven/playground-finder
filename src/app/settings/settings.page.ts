@@ -81,6 +81,26 @@ export class SettingsPage {
     return LocationOptionType.icon(type)
   }
 
+  getMinIcon(type: LocationOptionType): string {
+    return LocationOptionType.minIcon(type)
+  }
+
+  getMaxIcon(type: LocationOptionType): string {
+    return LocationOptionType.maxIcon(type)
+  }
+
+  getMinLabel(type: LocationOptionType): string {
+    const labels = LocationOptionType.stepLabels(type)
+    return labels.length > 0 ? LocationOptionType.stepLabels(type)[0] : ''
+  }
+
+  getMaxLabel(type: LocationOptionType): string {
+    const labels = LocationOptionType.stepLabels(type)
+    return labels.length > 0
+      ? LocationOptionType.stepLabels(type)[labels.length - 1]
+      : ''
+  }
+
   getType(type: LocationOptionType): string {
     return LocationOptionType.dataType(type)
   }

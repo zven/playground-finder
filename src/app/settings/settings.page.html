@@ -39,11 +39,6 @@
 
   <div>
     <ion-list>
-      <!-- 
-      <ion-item-divider>
-        <ion-label>What can we use your location for?</ion-label>
-      </ion-item-divider>-->
-
       <ion-item *ngFor="let option of locationOptions">
         <ion-avatar slot="start">
           <ion-icon [name]="getIcon(option.type)"></ion-icon>
@@ -52,6 +47,13 @@
           <h3 (click)="showLocationOptionDetails(option.type)">
             {{ getTitle(option.type) | translate }}
             <ion-icon id="help-icon" name="help-circle-outline"></ion-icon>
+            <ion-chip
+              *ngIf="getValueLabel(option).length"
+              class="range-label-chip"
+              color="primary"
+            >
+              {{ getValueLabel(option) }}
+            </ion-chip>
           </h3>
           <p>{{ getSubtitle(option.type) | translate }}</p>
           <ion-range
@@ -64,8 +66,34 @@
             [(ngModel)]="option.value"
             (ionChange)="onOptionChange()"
           >
+            <ion-icon
+              *ngIf="getMinIcon(option.type)"
+              color="medium"
+              slot="start"
+              size="small"
+              [name]="getMinIcon(option.type)"
+            ></ion-icon>
+            <ion-icon
+              *ngIf="getMaxIcon(option.type)"
+              color="medium"
+              slot="end"
+              [name]="getMaxIcon(option.type)"
+            ></ion-icon>
           </ion-range>
-          <p class="range-label">{{ getValueLabel(option) }}</p>
+          <ion-label
+            *ngIf="getMinLabel(option.type).length"
+            class="range-min-label"
+            color="medium"
+          >
+            {{ getMinLabel(option.type) }}
+          </ion-label>
+          <ion-label
+            *ngIf="getMaxLabel(option.type).length"
+            class="range-max-label"
+            color="medium"
+          >
+            {{ getMaxLabel(option.type) }}
+          </ion-label>
         </ion-label>
         <ion-toggle
           *ngIf="getType(option.type) === 'boolean'"

@@ -29,7 +29,9 @@
 
   ion-icon {
     text-align: center;
+    vertical-align: middle;
   }
+
   ion-button {
     --border-radius: 8px;
     ion-icon {
@@ -57,10 +59,6 @@
   width: 100%;
   height: 100%;
   backdrop-filter: blur(1px);
-}
-
-ion-icon {
-  vertical-align: middle;
 }
 
 @media (prefers-color-scheme: light) {

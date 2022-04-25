@@ -3,35 +3,17 @@ export class LocationOption {
   value: any
 
   static privacyLevel(option: LocationOption): LocationPrivacyLevel {
-    switch (option.type) {
-      case LocationOptionType.accuracy:
-      case LocationOptionType.interval:
-        const privacyLevel =
-          option.value / (LocationOptionType.steps(option.type).length - 1)
-        const privacyLevels = Object.keys(LocationPrivacyLevel).length / 2 - 1
-        return privacyLevel * privacyLevels
-      case LocationOptionType.playgrounds:
-      case LocationOptionType.navigation:
-        return option.value
-          ? LocationPrivacyLevel.low
-          : LocationPrivacyLevel.high
-    }
+    const privacyLevel =
+      option.value / (LocationOptionType.steps(option.type).length - 1)
+    const privacyLevels = Object.keys(LocationPrivacyLevel).length / 2 - 1
+    return privacyLevels - privacyLevel * privacyLevels
   }
 
   static qualityLevel(option: LocationOption): LocationQualityLevel {
-    switch (option.type) {
-      case LocationOptionType.accuracy:
-      case LocationOptionType.interval:
-        const usabilityLevel =
-          option.value / (LocationOptionType.steps(option.type).length - 1)
-        const usabilityLevels = Object.keys(LocationQualityLevel).length / 2 - 1
-        return usabilityLevels - usabilityLevel * usabilityLevels
-      case LocationOptionType.playgrounds:
-      case LocationOptionType.navigation:
-        return option.value
-          ? LocationQualityLevel.high
-          : LocationQualityLevel.low
-    }
+    const usabilityLevel =
+      option.value / (LocationOptionType.steps(option.type).length - 1)
+    const usabilityLevels = Object.keys(LocationQualityLevel).length / 2 - 1
+    return usabilityLevel * usabilityLevels
   }
 
   static combinedPrivacyLevel(options: LocationOption[]): LocationPrivacyLevel {
@@ -79,6 +61,38 @@ export namespace LocationOptionType {
     }
   }
 
+  export function minIcon(type: LocationOptionType): string {
+    return ''
+    // TODO: potentially reenable later
+    /*
+    switch (type) {
+      case LocationOptionType.accuracy:
+        return 'expand-outline'
+      case LocationOptionType.interval:
+        return 'play-outline'
+      case LocationOptionType.playgrounds:
+      case LocationOptionType.navigation:
+        return ''
+    }
+    */
+  }
+
+  export function maxIcon(type: LocationOptionType): string {
+    return ''
+    // TODO: potentially reenable later
+    /*
+    switch (type) {
+      case LocationOptionType.accuracy:
+        return 'contract-outline'
+      case LocationOptionType.interval:
+        return 'play-forward-outline'
+      case LocationOptionType.playgrounds:
+      case LocationOptionType.navigation:
+        return ''
+    }
+    */
+  }
+
   export function group(type: LocationOptionType): LocationOptionGroup {
     switch (type) {
       case LocationOptionType.accuracy:
@@ -104,9 +118,9 @@ export namespace LocationOptionType {
   export function steps(type: LocationOptionType): number[] {
     switch (type) {
       case LocationOptionType.accuracy:
-        return [0, 100, 500, 1000]
+        return [1000, 500, 100, 0]
       case LocationOptionType.interval:
-        return [0, 60, 600, 1800]
+        return [1800, 600, 60, 0]
       case LocationOptionType.playgrounds:
       case LocationOptionType.navigation:
         return [0, 0]
@@ -117,17 +131,17 @@ export namespace LocationOptionType {
     switch (type) {
       case LocationOptionType.accuracy:
         return [
-          'accurate as possible',
-          'fairly accurate',
-          'coarse',
           'very coarse',
+          'coarse',
+          'fairly accurate',
+          'as accurate as possible',
         ]
       case LocationOptionType.interval:
         return [
-          'frequent as possible',
-          'fairly frequent',
-          'infrequently',
           'very infrequently',
+          'infrequently',
+          'fairly frequent',
+          'as frequent as possible',
         ]
       case LocationOptionType.playgrounds:
       case LocationOptionType.navigation:
