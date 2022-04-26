@@ -1,32 +1,6 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title> Privacy settings </ion-title>
-    <ion-buttons slot="end">
-      <ion-button
-        shape="round"
-        fill="solid"
-        color="light"
-        (click)="onQualityRatingDetailsClick()"
-      >
-        <ion-icon
-          [ngClass]="qualityRatingCssClass"
-          slot="icon-only"
-          name="diamond"
-        ></ion-icon
-      ></ion-button>
-      <ion-button
-        shape="round"
-        fill="solid"
-        color="light"
-        (click)="onPrivacyRatingDetailsClick()"
-      >
-        <ion-icon
-          [ngClass]="privacyRatingCssClass"
-          slot="icon-only"
-          name="shield"
-        ></ion-icon>
-      </ion-button>
-    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -38,6 +12,64 @@
   </ion-header>
 
   <div>
+    <div class="rating-container">
+      <ion-button
+        class="rating-item"
+        fill="outline"
+        (click)="onQualityRatingDetailsClick()"
+        ><ion-label color="medium">
+          service
+          <br />
+          <ion-icon
+            *ngFor="let i of qualityLevelIcons.full"
+            name="star"
+            color="primary"
+          >
+          </ion-icon>
+          <ion-icon
+            *ngFor="let i of qualityLevelIcons.half"
+            name="star-half-outline"
+            color="primary"
+          >
+          </ion-icon>
+          <ion-icon
+            *ngFor="let i of qualityLevelIcons.empty"
+            name="star-outline"
+            color="primary"
+          >
+          </ion-icon>
+        </ion-label>
+      </ion-button>
+      <ion-button
+        class="rating-item"
+        fill="outline"
+        (click)="onPrivacyRatingDetailsClick()"
+      >
+        <ion-label color="medium" class="ion-text-wrap">
+          privacy
+          <br />
+          <ion-icon
+            *ngFor="let i of privacyLevelIcons.full"
+            name="shield"
+            color="primary"
+          >
+          </ion-icon>
+          <ion-icon
+            *ngFor="let i of privacyLevelIcons.half"
+            name="shield-half-outline"
+            color="primary"
+          >
+          </ion-icon>
+          <ion-icon
+            *ngFor="let i of privacyLevelIcons.empty"
+            name="shield-outline"
+            color="primary"
+          >
+          </ion-icon>
+        </ion-label>
+      </ion-button>
+    </div>
+
     <ion-list>
       <ion-item *ngFor="let option of locationOptions">
         <ion-avatar slot="start">

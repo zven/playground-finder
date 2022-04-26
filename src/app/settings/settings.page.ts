@@ -27,38 +27,28 @@ export class SettingsPage {
     })
   }
 
-  get currentPrivacyLevel(): LocationPrivacyLevel {
+  get privacyLevel(): LocationPrivacyLevel {
     return LocationOption.combinedPrivacyLevel(this.locationOptions)
   }
 
-  get currentQualityLevel(): LocationQualityLevel {
+  get qualityLevel(): LocationQualityLevel {
     return LocationOption.combinedQualityLevel(this.locationOptions)
   }
 
-  get privacyRatingCssClass(): string {
-    switch (Math.floor(this.currentPrivacyLevel)) {
-      case LocationPrivacyLevel.high:
-        return 'icon-high'
-      case LocationPrivacyLevel.mediumHigh:
-        return 'icon-medium-high'
-      case LocationPrivacyLevel.mediumLow:
-        return 'icon-medium-low'
-      case LocationPrivacyLevel.low:
-        return 'icon-low'
-    }
+  get qualityLevelIcons(): RatingIcons {
+    const level = this.qualityLevel
+    const full = Math.floor(level)
+    const empty = Math.floor(LocationQualityLevel.high - level)
+    const half = Math.ceil(level - full)
+    return new RatingIcons(full, half, empty)
   }
 
-  get qualityRatingCssClass(): string {
-    switch (Math.floor(this.currentQualityLevel)) {
-      case LocationQualityLevel.high:
-        return 'icon-high'
-      case LocationQualityLevel.mediumHigh:
-        return 'icon-medium-high'
-      case LocationQualityLevel.mediumLow:
-        return 'icon-medium-low'
-      case LocationQualityLevel.low:
-        return 'icon-low'
-    }
+  get privacyLevelIcons(): RatingIcons {
+    const level = this.privacyLevel
+    const full = Math.floor(level)
+    const empty = Math.floor(LocationPrivacyLevel.high - level)
+    const half = Math.ceil(level - full)
+    return new RatingIcons(full, half, empty)
   }
 
   getTitle(type: LocationOptionType): string {
@@ -176,18 +166,22 @@ export class SettingsPage {
   }
 
   async onPrivacyRatingDetailsClick() {
-    await this.showRatingDetails(
-      'privacy',
-      'shield',
-      this.privacyRatingCssClass
-    )
+    await this.showRatingDetails('privacy', 'shield')
   }
 
   async onQualityRatingDetailsClick() {
-    await this.showRatingDetails(
-      'quality',
-      'diamond',
-      this.qualityRatingCssClass
-    )
+    await this.showRatingDetails('quality', 'star')
+  }
+}
+
+export class RatingIcons {
+  full: any[]
+  half: any[]
+  empty: any[]
+
+  constructor(full: number, half: number, empty: number) {
+    this.full = new Array(full)
+    this.half = new Array(half)
+    this.empty = new Array(empty)
   }
 }
