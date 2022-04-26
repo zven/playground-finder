@@ -2,6 +2,19 @@ export class LocationOption {
   type: LocationOptionType
   value: any
 
+  constructor(type: LocationOptionType) {
+    this.type = type
+    this.value = LocationOptionType.defaultValue(type)
+  }
+
+  static extractedValue(option: LocationOption): any {
+    const steps = LocationOptionType.steps(option.type)
+    if (steps && steps.length > option.value) {
+      return steps[option.value]
+    }
+    return option.value
+  }
+
   static privacyLevel(option: LocationOption): LocationPrivacyLevel {
     const privacyLevel =
       option.value / (LocationOptionType.steps(option.type).length - 1)
@@ -123,7 +136,20 @@ export namespace LocationOptionType {
         return [1800, 600, 60, 0]
       case LocationOptionType.playgrounds:
       case LocationOptionType.navigation:
-        return [0, 0]
+        return [0, 1]
+    }
+  }
+
+  export function defaultValue(type: LocationOptionType): any {
+    switch (type) {
+      case LocationOptionType.accuracy:
+        return 0
+      case LocationOptionType.interval:
+        return 0
+      case LocationOptionType.playgrounds:
+        return true
+      case LocationOptionType.navigation:
+        return false
     }
   }
 

@@ -19,25 +19,16 @@ export class LocationManagementService {
   private cachedPosition: Position = undefined
 
   static LOCATION_OPTIONS_STORAGE_KEY = 'location_options_storage'
+  static LOCATION_OPTIONS_STORAGE_VERISON_KEY =
+    'location_options_storage_version'
+  static LOCATION_OPTIONS_CURRENT_VERSION = '0'
 
   get defaultOptions(): LocationOption[] {
     return [
-      {
-        type: LocationOptionType.playgrounds,
-        value: true,
-      },
-      {
-        type: LocationOptionType.navigation,
-        value: false,
-      },
-      {
-        type: LocationOptionType.accuracy,
-        value: 0,
-      },
-      {
-        type: LocationOptionType.interval,
-        value: 0,
-      },
+      new LocationOption(LocationOptionType.playgrounds),
+      new LocationOption(LocationOptionType.navigation),
+      new LocationOption(LocationOptionType.accuracy),
+      new LocationOption(LocationOptionType.interval),
     ]
   }
 
@@ -53,6 +44,7 @@ export class LocationManagementService {
   }
 
   async initLocationOptions() {
+    await this.checkVersion()
     const { value } = await Storage.get({
       key: LocationManagementService.LOCATION_OPTIONS_STORAGE_KEY,
     })
@@ -66,6 +58,23 @@ export class LocationManagementService {
       } catch (error) {}
     }
     this.locationOptions.next(this.defaultOptions)
+  }
+
+  private async checkVersion(): Promise<void> {
+    const { value } = await Storage.get({
+      key: LocationManagementService.LOCATION_OPTIONS_STORAGE_VERISON_KEY,
+    })
+    if (value !== LocationManagementService.LOCATION_OPTIONS_CURRENT_VERSION) {
+      if (value) {
+        await Storage.remove({
+          key: LocationManagementService.LOCATION_OPTIONS_STORAGE_KEY,
+        })
+      }
+      await Storage.set({
+        key: LocationManagementService.LOCATION_OPTIONS_STORAGE_VERISON_KEY,
+        value: LocationManagementService.LOCATION_OPTIONS_CURRENT_VERSION,
+      })
+    }
   }
 
   async loadLocationOption(type: LocationOptionType): Promise<LocationOption> {
@@ -94,9 +103,12 @@ export class LocationManagementService {
   }
 
   private async shouldUseCachedPosition(): Promise<boolean> {
-    const locationInterval = (
-      await this.loadLocationOption(LocationOptionType.interval)
-    ).value
+    const locationIntervalOption = await this.loadLocationOption(
+      LocationOptionType.interval
+    )
+    const locationInterval = LocationOption.extractedValue(
+      locationIntervalOption
+    )
     if (this.cachedPosition && this.cachedPosition.coords) {
       const timestamp = Date.now()
       const timeDiff = timestamp - this.cachedPosition.timestamp
@@ -108,9 +120,12 @@ export class LocationManagementService {
   private async filterPositionWithAccuracy(
     position: Position
   ): Promise<Position> {
-    const locationAccuracy = (
-      await this.loadLocationOption(LocationOptionType.accuracy)
-    ).value
+    const locationAccuracyOption = await this.loadLocationOption(
+      LocationOptionType.accuracy
+    )
+    const locationAccuracy = LocationOption.extractedValue(
+      locationAccuracyOption
+    )
     if (!position || !position.coords) {
       return undefined
     } else if (
