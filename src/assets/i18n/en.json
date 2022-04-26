@@ -21,7 +21,7 @@
       "title": "Interval",
       "subtitle": "How often is your location accessed?",
       "description": "Using the interval you can determine, how often this app is able to retrieve a new location from your device. A higher value therefore leads to a less frequent retrieval of your devices location. Example: If you've set to 10 Minutes, this means a new location is at maximum retrieved every 10 Minutes. In the meantime the previously retrieved location is used, which of course it might up to 10 Minutes old, which could potentially degrade the service quality.",
-      "detailDescription": "There are 4 interval-levels available:<br><b>as frequent as possible</b> always uses the most recent location availabe on this device.<br><b>fairly frequent</b> requests new locations every minute.<br><b>infrequent</b> requests new locations every 10 minutes.<br><b>very old</b> requests new locations every 30 minutes."
+      "detailDescription": "There are 4 interval-levels available:<br><b>as frequent as possible</b> always uses the most recent location availabe on this device.<br><b>fairly frequent</b> requests new locations every minute.<br><b>infrequent</b> requests new locations every 10 minutes.<br><b>very infrequent</b> requests new locations every 30 minutes."
     },
     "playgrounds": {
       "title": "Playgrounds",

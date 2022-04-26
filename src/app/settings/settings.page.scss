@@ -50,7 +50,8 @@ ion-range {
   text-align: center;
   --border-radius: 16px;
   --border-color: transparent;
-  --box-shadow: 0px 1px 8px rgba(0, 0, 0, 0.2);
+  --box-shadow: 0px 1px 8px rgba(100, 100, 100, 0.6);
+  --background-activated: rgba(255, 196, 0, 0.2);
   ion-label {
     padding: 0.75em;
   }

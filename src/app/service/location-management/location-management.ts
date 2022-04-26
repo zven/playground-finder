@@ -138,8 +138,8 @@ export namespace LocationOptionType {
         ]
       case LocationOptionType.interval:
         return [
-          'very infrequently',
-          'infrequently',
+          'very infrequent',
+          'infrequent',
           'fairly frequent',
           'as frequent as possible',
         ]
