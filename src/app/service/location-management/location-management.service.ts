@@ -23,7 +23,7 @@ export class LocationManagementService {
     'location_options_storage_version'
   static LOCATION_OPTIONS_CURRENT_VERSION = '0'
 
-  get defaultOptions(): LocationOption[] {
+  private get defaultOptions(): LocationOption[] {
     return [
       new LocationOption(LocationOptionType.playgrounds),
       new LocationOption(LocationOptionType.navigation),
@@ -135,7 +135,8 @@ export class LocationManagementService {
       // original accuracy already fits
       return position
     }
-    // calculate buffer around requested location
+
+    // create random location with accuracy from user
     const positionBuffer = buffer(
       point([position.coords.longitude, position.coords.latitude]),
       locationAccuracy,
@@ -143,9 +144,6 @@ export class LocationManagementService {
         units: 'meters',
       }
     )
-
-    // translating buffer to random distance and direction
-    // + 0.2 so that there is always some offset
     const randomDistance = Math.floor((Math.random() + 0.2) * locationAccuracy)
     const randomDirection = Math.floor(Math.random() * 360)
     const translatedBuffer = transformTranslate(
@@ -156,15 +154,9 @@ export class LocationManagementService {
         units: 'meters',
       }
     )
-
-    // create bbox from buffer
     const posBbox = bbox(translatedBuffer)
-
-    // generate random points in bbox
     const randomPoints = randomPoint(1, { bbox: posBbox })
     const randomPointCoord = randomPoints.features[0].geometry.coordinates
-
-    // create new less accurate position from randomPoint
     const newPosition: Position = {
       timestamp: position.timestamp,
       coords: {

@@ -98,19 +98,6 @@
             [(ngModel)]="option.value"
             (ionChange)="onOptionChange()"
           >
-            <ion-icon
-              *ngIf="getMinIcon(option.type)"
-              color="medium"
-              slot="start"
-              size="small"
-              [name]="getMinIcon(option.type)"
-            ></ion-icon>
-            <ion-icon
-              *ngIf="getMaxIcon(option.type)"
-              color="medium"
-              slot="end"
-              [name]="getMaxIcon(option.type)"
-            ></ion-icon>
           </ion-range>
           <ion-label
             *ngIf="getMinLabel(option.type).length"

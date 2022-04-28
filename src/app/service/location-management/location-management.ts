@@ -74,38 +74,6 @@ export namespace LocationOptionType {
     }
   }
 
-  export function minIcon(type: LocationOptionType): string {
-    return ''
-    // TODO: potentially reenable later
-    /*
-    switch (type) {
-      case LocationOptionType.accuracy:
-        return 'expand-outline'
-      case LocationOptionType.interval:
-        return 'play-outline'
-      case LocationOptionType.playgrounds:
-      case LocationOptionType.navigation:
-        return ''
-    }
-    */
-  }
-
-  export function maxIcon(type: LocationOptionType): string {
-    return ''
-    // TODO: potentially reenable later
-    /*
-    switch (type) {
-      case LocationOptionType.accuracy:
-        return 'contract-outline'
-      case LocationOptionType.interval:
-        return 'play-forward-outline'
-      case LocationOptionType.playgrounds:
-      case LocationOptionType.navigation:
-        return ''
-    }
-    */
-  }
-
   export function group(type: LocationOptionType): LocationOptionGroup {
     switch (type) {
       case LocationOptionType.accuracy:

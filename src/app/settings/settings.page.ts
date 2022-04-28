@@ -71,14 +71,6 @@ export class SettingsPage {
     return LocationOptionType.icon(type)
   }
 
-  getMinIcon(type: LocationOptionType): string {
-    return LocationOptionType.minIcon(type)
-  }
-
-  getMaxIcon(type: LocationOptionType): string {
-    return LocationOptionType.maxIcon(type)
-  }
-
   getMinLabel(type: LocationOptionType): string {
     const labels = LocationOptionType.stepLabels(type)
     return labels.length > 0 ? LocationOptionType.stepLabels(type)[0] : ''
