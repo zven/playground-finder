@@ -7,7 +7,7 @@ import {
 } from '../service/playground-service/playground'
 
 import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-geocoding.service'
-import { LocationService } from '../service/location/location.service'
+import { LocationService } from '@simport/location-privacy-toolkit'
 import { MapViewComponent } from './map-view/map-view/map-view.component'
 import { PlaygroundDetailComponent } from '../playground-detail/playground-detail.component'
 import {

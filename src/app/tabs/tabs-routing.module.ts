@@ -1,43 +1,37 @@
 import { NgModule } from '@angular/core'
 import { RouterModule, Routes } from '@angular/router'
-import { TabsPage } from './tabs.page'
-
-export enum Tab {
-  Map = 'map',
-  List = 'list',
-  Settings = 'settings',
-}
+import { TabsPage, TabRoute } from './tabs.page'
 
 const routes: Routes = [
   {
-    path: Tab.Map,
+    path: TabRoute.root,
     component: TabsPage,
     children: [
       {
-        path: Tab.Map,
+        path: TabRoute.map,
         loadChildren: () =>
           import('../map/map.module').then((m) => m.MapModule),
       },
       {
-        path: Tab.List,
+        path: TabRoute.list,
         loadChildren: () =>
           import('../list/list.module').then((m) => m.ListModule),
       },
       {
-        path: Tab.Settings,
+        path: TabRoute.settings,
         loadChildren: () =>
           import('../settings/settings.module').then((m) => m.SettingsModule),
       },
       {
         path: '',
-        redirectTo: Tab.Map,
+        redirectTo: TabRoute.map,
         pathMatch: 'full',
       },
     ],
   },
   {
     path: '',
-    redirectTo: Tab.Map,
+    redirectTo: TabRoute.root + TabRoute.map,
     pathMatch: 'full',
   },
 ]

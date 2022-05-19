@@ -6,7 +6,7 @@ import {
   ToastController,
 } from '@ionic/angular'
 import { DirectionService } from '../service/direction/direction.service'
-import { LocationService } from '../service/location/location.service'
+import { LocationService } from '@simport/location-privacy-toolkit'
 import { Playground } from '../service/playground-service/playground'
 import { ReverseGeocodingService } from '../service/reverse-geocoding/reverse-geocoding.service'
 

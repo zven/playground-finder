@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core'
-import { LocationService } from './service/location/location.service'
+import { LocationService } from '@simport/location-privacy-toolkit'
 import SwiperCore, { Pagination, Navigation } from 'swiper'
 
 SwiperCore.use([Pagination, Navigation])

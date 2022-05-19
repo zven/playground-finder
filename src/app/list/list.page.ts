@@ -6,7 +6,7 @@ import {
   Playground,
   PlaygroundResult,
 } from '../service/playground-service/playground'
-import { Tab } from '../tabs/tabs-routing.module'
+import { TabRoute } from '../tabs/tabs.page'
 
 @Component({
   selector: 'app-list',
@@ -50,12 +50,12 @@ export class ListPage implements AfterViewInit {
   }
 
   showPlayground(playground: Playground) {
-    this.router.navigate([`../${Tab.Map}`], {
+    this.router.navigate([`../${TabRoute.map}`], {
       state: { center: [playground.lon, playground.lat] },
     })
   }
 
   showMap() {
-    this.router.navigate([`../${Tab.Map}`], {})
+    this.router.navigate([`../${TabRoute.map}`], {})
   }
 }
