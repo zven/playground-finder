@@ -31,7 +31,7 @@ const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: TabRoute.root + TabRoute.map,
+    redirectTo: TabRoute.root,
     pathMatch: 'full',
   },
 ]

@@ -1,4 +1,11 @@
-import { Component, Input, OnInit } from '@angular/core'
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  ViewChild,
+} from '@angular/core'
 import {
   Playground,
   PlaygroundResult,
@@ -7,17 +14,16 @@ import { MapIcon, MapMode, MapSource, MarkerMode } from './map'
 import { Constants } from 'src/app/utils/constants'
 import { Position } from '@capacitor/geolocation'
 
-import * as mapboxGl from 'mapbox-gl'
+import * as maplibreGl from 'maplibre-gl'
 import * as turf from '@turf/turf'
 import { BehaviorSubject } from 'rxjs'
-import { environment } from 'src/environments/environment'
 
 @Component({
   selector: 'app-map-view',
   templateUrl: './map-view.component.html',
   styleUrls: ['./map-view.component.scss'],
 })
-export class MapViewComponent implements OnInit {
+export class MapViewComponent implements OnInit, AfterViewInit {
   private static MAP_HANDLERS = [
     'scrollZoom',
     'boxZoom',
@@ -29,7 +35,9 @@ export class MapViewComponent implements OnInit {
   ]
   private static MAP_PADDING = 50
 
-  private map: mapboxGl.Map
+  @ViewChild('map')
+  private mapContainer!: ElementRef<HTMLElement>
+  private map: maplibreGl.Map
   private previousUserHeading: number = 0
 
   @Input() searchRadius: number
@@ -88,106 +96,7 @@ export class MapViewComponent implements OnInit {
     return p
   }
 
-  constructor() {
-    mapboxGl.accessToken = environment.mapbox.token
-  }
-
   ngOnInit() {
-    this.map = new mapboxGl.Map({
-      container: 'mapbox',
-      style: 'mapbox://styles/mapbox/streets-v11',
-      zoom: Constants.MAP_INITIAL_ZOOM,
-      center: Constants.MAP_INITIAL_LON_LAT,
-    })
-
-    this.map.on('load', () => {
-      this.map.resize()
-      window['map'] = this.map
-
-      this.loadImage('assets/balloon.png', MapIcon.playgrounds)
-      this.loadImage('assets/balloon-lock.png', MapIcon.privatePlaygrounds)
-      this.loadImage('assets/start.png', MapIcon.routeStart)
-      this.loadImage('assets/stop.png', MapIcon.routeEnd)
-      this.loadImage('assets/user-location.png', MapIcon.userLocation)
-      this.loadImage(
-        'assets/user-location-direction.png',
-        MapIcon.userLocationDirection
-      )
-
-      // playgrounds
-      this.map.on(
-        'click',
-        [MapSource.playgrounds, MapSource.privatePlaygrounds],
-        async (e) => {
-          if (!this.isMapInteractionEnabled.value) return
-          const feature = e.features[0]
-          if (!feature) return
-          await this.openPlaygroundDetails(feature.properties.id)
-        }
-      )
-      this.map.on(
-        'mouseenter',
-        [MapSource.playgrounds, MapSource.privatePlaygrounds],
-        () => {
-          if (!this.isMapInteractionEnabled.value) return
-          this.map.getCanvas().style.cursor = 'pointer'
-        }
-      )
-      this.map.on(
-        'mouseleave',
-        [MapSource.playgrounds, MapSource.privatePlaygrounds],
-        () => {
-          if (!this.isMapInteractionEnabled.value) return
-          this.map.getCanvas().style.cursor = ''
-        }
-      )
-      this.map.on('flystart', function () {
-        this.isMapFlying = true
-      })
-      this.map.on('flyend', function () {
-        this.isMapFlying = false
-      })
-
-      // positional marker
-      const marker = new mapboxGl.Marker({
-        draggable: true,
-        color: '#FFBB01',
-      }).setLngLat(this.markerLngLat.value)
-
-      this.markerLngLat.subscribe((lngLat) => {
-        if (marker) marker.setLngLat(lngLat)
-      })
-      this.showMarker.subscribe((show) => {
-        if (show) {
-          marker.addTo(this.map)
-        } else {
-          marker.remove()
-        }
-      })
-      marker.on('drag', () => {
-        if (!this.isMapInteractionEnabled.value) return
-        const lngLat = marker.getLngLat()
-        this.addPinRadius([lngLat.lng, lngLat.lat])
-      })
-      marker.on('dragend', () => {
-        if (!this.isMapInteractionEnabled.value) return
-        const lngLat = marker.getLngLat()
-        this.movedMarker([lngLat.lng, lngLat.lat])
-      })
-      this.map.on('click', async (e) => {
-        if (!this.isMapInteractionEnabled.value) return
-        if (!this.showMarker.value) return
-        let f = this.map.queryRenderedFeatures(e.point, {
-          layers: [MapSource.playgrounds, MapSource.privatePlaygrounds],
-        })
-        if (f.length) {
-          return
-        }
-        const lngLat = marker.getLngLat()
-        this.movedMarker([lngLat.lng, lngLat.lat])
-      })
-    })
-
     this.userPosition.subscribe((p) => {
       if (p) {
         if (this.markerMode === MarkerMode.userLocation) {
@@ -235,6 +144,121 @@ export class MapViewComponent implements OnInit {
 
     this.additionalTopMapPadding.subscribe(() => {
       this.map.setPadding(this.mapPadding)
+    })
+  }
+
+  ngAfterViewInit() {
+    this.map = new maplibreGl.Map({
+      container: this.mapContainer.nativeElement,
+      style: 'TODO: select map style',
+      zoom: Constants.MAP_INITIAL_ZOOM,
+      center: Constants.MAP_INITIAL_LON_LAT,
+    })
+
+    this.map.on('load', () => {
+      this.map.resize()
+      window['map'] = this.map
+
+      this.loadImage('assets/balloon.png', MapIcon.playgrounds)
+      this.loadImage('assets/balloon-lock.png', MapIcon.privatePlaygrounds)
+      this.loadImage('assets/start.png', MapIcon.routeStart)
+      this.loadImage('assets/stop.png', MapIcon.routeEnd)
+      this.loadImage('assets/user-location.png', MapIcon.userLocation)
+      this.loadImage(
+        'assets/user-location-direction.png',
+        MapIcon.userLocationDirection
+      )
+
+      // playgrounds click
+      const playgroundsClickHandler = async (e) => {
+        if (!this.isMapInteractionEnabled.value) return
+        const feature = e.features[0]
+        if (!feature) return
+        await this.openPlaygroundDetails(feature.properties.id)
+      }
+      this.map.on('click', MapSource.playgrounds, playgroundsClickHandler)
+      this.map.on(
+        'click',
+        MapSource.privatePlaygrounds,
+        playgroundsClickHandler
+      )
+
+      // playgrounds mouse enter
+      const playgroundsMouseEnterHandler = () => {
+        if (!this.isMapInteractionEnabled.value) return
+        this.map.getCanvas().style.cursor = 'pointer'
+      }
+      this.map.on(
+        'mouseenter',
+        MapSource.playgrounds,
+        playgroundsMouseEnterHandler
+      )
+      this.map.on(
+        'mouseenter',
+        MapSource.privatePlaygrounds,
+        playgroundsMouseEnterHandler
+      )
+
+      // playgrounds mouse leave
+      const playgroundsMouseLeaveHandler = () => {
+        if (!this.isMapInteractionEnabled.value) return
+        this.map.getCanvas().style.cursor = ''
+      }
+      this.map.on(
+        'mouseleave',
+        MapSource.playgrounds,
+        playgroundsMouseLeaveHandler
+      )
+      this.map.on(
+        'mouseleave',
+        MapSource.privatePlaygrounds,
+        playgroundsMouseLeaveHandler
+      )
+      this.map.on('flystart', function () {
+        this.isMapFlying = true
+      })
+      this.map.on('flyend', function () {
+        this.isMapFlying = false
+      })
+
+      // positional marker
+      const marker = new maplibreGl.Marker({
+        draggable: true,
+        color: '#FFBB01',
+      }).setLngLat(this.markerLngLat.value)
+
+      this.markerLngLat.subscribe((lngLat) => {
+        if (marker) marker.setLngLat(lngLat)
+      })
+      this.showMarker.subscribe((show) => {
+        if (show) {
+          marker.addTo(this.map)
+        } else {
+          marker.remove()
+        }
+      })
+      marker.on('drag', () => {
+        if (!this.isMapInteractionEnabled.value) return
+        const lngLat = marker.getLngLat()
+        this.addPinRadius([lngLat.lng, lngLat.lat])
+      })
+      marker.on('dragend', () => {
+        if (!this.isMapInteractionEnabled.value) return
+        const lngLat = marker.getLngLat()
+        this.movedMarker([lngLat.lng, lngLat.lat])
+      })
+      this.map.on('click', async (e) => {
+        if (!this.isMapInteractionEnabled.value) return
+        if (!this.showMarker.value) return
+        let f = this.map.queryRenderedFeatures(e.point, {
+          layers: [MapSource.playgrounds, MapSource.privatePlaygrounds],
+        })
+        if (f.length) {
+          return
+        }
+        const lngLat = marker.getLngLat()
+        this.movedMarker([lngLat.lng, lngLat.lat])
+      })
     })
   }
 
@@ -406,18 +430,22 @@ export class MapViewComponent implements OnInit {
         units: 'meters',
       }
     )
-    const haloSource = this.map.getSource(MapSource.userLocationHalo)
+    const haloSource = this.map.getSource(
+      MapSource.userLocationHalo
+    ) as maplibreGl.GeoJSONSource
     if (haloSource) {
       haloSource.setData(haloData)
+    } else {
+      this.map.addSource(MapSource.userLocationHalo, {
+        type: 'geojson',
+        data: haloData,
+      })
     }
     if (!this.map.getLayer(MapSource.userLocationHalo)) {
       this.map.addLayer({
         id: MapSource.userLocationHalo,
         type: 'fill',
-        source: {
-          type: 'geojson',
-          data: haloData,
-        },
+        source: MapSource.userLocationHalo,
         paint: {
           'fill-color': '#F8B200',
           'fill-opacity': 0.1,
@@ -465,19 +493,23 @@ export class MapViewComponent implements OnInit {
         units: 'kilometers',
       }
     )
-    const radiusSource = this.map.getSource(MapSource.markerHalo)
+    const radiusSource = this.map.getSource(
+      MapSource.markerHalo
+    ) as maplibreGl.GeoJSONSource
     if (radiusSource) {
       radiusSource.setData(radiusData)
+    } else {
+      this.map.addSource(MapSource.markerHalo, {
+        type: 'geojson',
+        data: radiusData,
+      })
     }
 
     if (!this.map.getLayer(MapSource.markerHalo)) {
       this.map.addLayer({
         id: MapSource.markerHalo,
         type: 'fill',
-        source: {
-          type: 'geojson',
-          data: radiusData,
-        },
+        source: MapSource.markerHalo,
         paint: {
           'fill-color': '#0084db',
           'fill-opacity': 0.1,
@@ -497,39 +529,45 @@ export class MapViewComponent implements OnInit {
   }
 
   private addPlaygrounds(playgrounds: Playground[], isPrivate: boolean) {
-    const playgroundFeatures = playgrounds.map((playground) => {
-      return {
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [playground.lon, playground.lat],
-        },
-        properties: {
-          title: playground.name,
-          id: playground.id,
-        },
+    const playgroundFeatures: GeoJSON.Feature[] = playgrounds.map(
+      (playground) => {
+        return {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [playground.lon, playground.lat],
+          },
+          properties: {
+            title: playground.name,
+            id: playground.id,
+          },
+        }
       }
-    })
+    )
     const playgroundSource = isPrivate
       ? MapSource.privatePlaygrounds
       : MapSource.playgrounds
     const icon = isPrivate ? MapIcon.privatePlaygrounds : MapIcon.playgrounds
-    const playgroundsData = {
+    const playgroundsData: GeoJSON.GeoJSON = {
       type: 'FeatureCollection',
       features: playgroundFeatures,
     }
-    const playgroundsSource = this.map.getSource(playgroundSource)
+    const playgroundsSource = this.map.getSource(
+      playgroundSource
+    ) as maplibreGl.GeoJSONSource
     if (playgroundsSource) {
       playgroundsSource.setData(playgroundsData)
+    } else {
+      this.map.addSource(playgroundSource, {
+        type: 'geojson',
+        data: playgroundsData,
+      })
     }
     if (!this.map.getLayer(playgroundSource)) {
       this.map.addLayer({
         id: playgroundSource,
         type: 'symbol',
-        source: {
-          type: 'geojson',
-          data: playgroundsData,
-        },
+        source: playgroundSource,
         layout: {
           'icon-image': icon,
           'icon-anchor': 'bottom',
@@ -545,37 +583,42 @@ export class MapViewComponent implements OnInit {
   }
 
   private addPlaygroundsBounds(playgrounds: Playground[]) {
-    const playgroundBoundsFeatures = playgrounds.map((playground) => {
-      if (playground.nodes) {
-        let nodes = playground.nodes
-        nodes.push(nodes[0])
-        return {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [nodes],
-          },
+    const playgroundBoundsFeatures: GeoJSON.Feature[] = playgrounds.map(
+      (playground) => {
+        if (playground.nodes) {
+          let nodes = playground.nodes
+          nodes.push(nodes[0])
+          return {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [nodes],
+            },
+            properties: {},
+          }
         }
       }
-    })
-    const playgroundsBoundsData = {
+    )
+    const playgroundsBoundsData: GeoJSON.GeoJSON = {
       type: 'FeatureCollection',
       features: playgroundBoundsFeatures,
     }
     const playgroundsBoundsSource = this.map.getSource(
       MapSource.playgroundsBounds
-    )
+    ) as maplibreGl.GeoJSONSource
     if (playgroundsBoundsSource) {
       playgroundsBoundsSource.setData(playgroundsBoundsData)
+    } else {
+      this.map.addSource(MapSource.playgroundsBounds, {
+        type: 'geojson',
+        data: playgroundsBoundsData,
+      })
     }
     if (!this.map.getLayer(MapSource.playgroundsBounds)) {
       this.map.addLayer({
         id: MapSource.playgroundsBounds,
         type: 'fill',
-        source: {
-          type: 'geojson',
-          data: playgroundsBoundsData,
-        },
+        source: MapSource.playgroundsBounds,
         paint: {
           'fill-color': '#FFBB01',
           'fill-opacity': 0.05,
@@ -605,7 +648,7 @@ export class MapViewComponent implements OnInit {
       this.currentPlaygroundResult.radiusMeters * 1.1,
       { units: 'meters' }
     )
-    this.map.fitBounds(turf.bbox(rangeCircle))
+    this.map.fitBounds(turf.bbox(rangeCircle) as maplibreGl.LngLatBoundsLike)
   }
 
   addRoute(route: any) {
@@ -616,25 +659,30 @@ export class MapViewComponent implements OnInit {
   private async addRouteToMap() {
     const route = this.currentRoute
     if (!route) return
-    const geojson = {
+    const geojson: GeoJSON.GeoJSON = {
       type: 'Feature',
       geometry: {
         type: 'LineString',
         coordinates: route,
       },
+      properties: {},
     }
-    const routeSource = this.map.getSource(MapSource.route)
+    const routeSource = this.map.getSource(
+      MapSource.route
+    ) as maplibreGl.GeoJSONSource
     if (routeSource) {
       routeSource.setData(geojson)
+    } else {
+      this.map.addSource(MapSource.route, {
+        type: 'geojson',
+        data: geojson,
+      })
     }
     if (!this.map.getLayer(MapSource.route)) {
       this.map.addLayer({
         id: MapSource.route,
         type: 'line',
-        source: {
-          type: 'geojson',
-          data: geojson,
-        },
+        source: MapSource.route,
         layout: {
           'line-join': 'round',
           'line-cap': 'round',
@@ -673,7 +721,7 @@ export class MapViewComponent implements OnInit {
           rotate: rotate,
         }
       : {}
-    const geojson = {
+    const geojson: GeoJSON.GeoJSON = {
       type: 'Feature',
       geometry: {
         type: 'Point',
@@ -681,9 +729,14 @@ export class MapViewComponent implements OnInit {
       },
       properties: properties,
     }
-    const source = this.map.getSource(iconSource)
+    const source = this.map.getSource(iconSource) as maplibreGl.GeoJSONSource
     if (source) {
       source.setData(geojson)
+    } else {
+      this.map.addSource(iconSource, {
+        type: 'geojson',
+        data: geojson,
+      })
     }
 
     const alignment = iconSource === MapSource.userLocation ? 'map' : 'auto'
@@ -691,10 +744,7 @@ export class MapViewComponent implements OnInit {
       this.map.addLayer({
         id: iconSource,
         type: 'symbol',
-        source: {
-          type: 'geojson',
-          data: geojson,
-        },
+        source: iconSource,
         layout: {
           'icon-image': icon,
           'icon-anchor': 'center',
@@ -717,7 +767,7 @@ export class MapViewComponent implements OnInit {
     if (!route) return
     var bounds = route.reduce(function (bounds, coord) {
       return bounds.extend(coord)
-    }, new mapboxGl.LngLatBounds(route[0], route[1]))
+    }, new maplibreGl.LngLatBounds(route[0], route[1]))
     this.map.fitBounds(bounds, {
       bearing: 0,
       pitch: 0,

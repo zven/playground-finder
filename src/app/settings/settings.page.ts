@@ -1,5 +1,6 @@
 import { Component } from '@angular/core'
 import { Router } from '@angular/router'
+import { BehaviorSubject } from 'rxjs'
 import { TabRoute } from '../tabs/tabs.page'
 
 export enum SettingsRoute {
@@ -14,6 +15,18 @@ export enum SettingsRoute {
 })
 export class SettingsPage {
   constructor(private router: Router) {}
+
+  private expertMode: BehaviorSubject<Boolean> = new BehaviorSubject<Boolean>(
+    false
+  )
+
+  get isExpertModeActive(): Boolean {
+    return this.expertMode.value
+  }
+
+  set isExpertModeActive(newValue: Boolean) {
+    this.expertMode.next(newValue)
+  }
 
   async openLocationPrivacySettings() {
     this.router.navigate([

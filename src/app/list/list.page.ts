@@ -1,5 +1,5 @@
 import { AfterViewInit, Component } from '@angular/core'
-import { Router } from '@angular/router'
+import { ActivatedRoute, Router } from '@angular/router'
 import { distance } from '@turf/turf'
 import { PlaygroundService } from '../service/playground-service/playground.service'
 import {
@@ -17,7 +17,8 @@ export class ListPage implements AfterViewInit {
   playgroundResult: PlaygroundResult
   constructor(
     private playgroundService: PlaygroundService,
-    private router: Router
+    private router: Router,
+    private activatedRoute: ActivatedRoute
   ) {}
 
   ngAfterViewInit(): void {
@@ -51,11 +52,14 @@ export class ListPage implements AfterViewInit {
 
   showPlayground(playground: Playground) {
     this.router.navigate([`../${TabRoute.map}`], {
+      relativeTo: this.activatedRoute,
       state: { center: [playground.lon, playground.lat] },
     })
   }
 
   showMap() {
-    this.router.navigate([`../${TabRoute.map}`], {})
+    this.router.navigate([`../${TabRoute.map}`], {
+      relativeTo: this.activatedRoute,
+    })
   }
 }
