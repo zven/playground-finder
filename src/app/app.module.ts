@@ -12,7 +12,7 @@ import { AppRoutingModule } from './app-routing.module'
 import { AppComponent } from './app.component'
 import { ServicesModule } from './service/services.module'
 import { DeviceOrientation } from '@awesome-cordova-plugins/device-orientation/ngx'
-import { PrivacyToolkitModule } from '@simport/location-privacy-toolkit'
+import { LocationPrivacyToolkitModule } from '@simport/location-privacy-toolkit'
 
 export function createTranslateLoader(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json')
@@ -37,7 +37,7 @@ export function createTranslateLoader(http: HttpClient) {
       extend: true,
     }),
     SwiperModule,
-    PrivacyToolkitModule,
+    LocationPrivacyToolkitModule,
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
